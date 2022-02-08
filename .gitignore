@@ -152,14 +152,16 @@ cython_debug/
 #.idea/
 
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
 
 # Local History for Visual Studio Code
 .history/
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+local_test/
+*.ipynb
+
+ra_config/*.json
+src/ra_config/*.json
+parsed_data.json

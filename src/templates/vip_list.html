@@ -1,0 +1,17 @@
+<form onsubmit="return mysubmit();">
+    <select name="vip" id="vip">
+    {% for vip in vips %}
+        {% if vip == selected_vip %}
+            <option value="/vip/{{vip}}" selected>{{vip}}</option>
+        {% else %}
+            <option value="/vip/{{vip}}">{{vip}}</option>
+        {% endif %}
+    {% endfor %}
+    </select>
+    <input type="submit" value="Submit">
+</form>
+<script>
+    function mysubmit(){
+        location.href = $('#vip').val();
+    }
+</script>

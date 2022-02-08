@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block content %}
+{% include 'vip_list.html' %}
+<hr/>
+<div>
+  <table>
+    <tr>
+      <th>Metric</th>
+      <th>Min</th>
+      <th>Mean</th>
+      <th>Max</th>
+      <th>Total</th>
+    </tr>
+    {% for metric in summary %}
+      <tr>
+        <td>{{ metric }}</td>
+        <td style="text-align:right">{{ summary[metric]['Min']|round(2) }}</td>
+        <td style="text-align:right">{{ summary[metric]['Average']|round(2) }}</td>
+        <td style="text-align:right">{{ summary[metric]['Max']|round(2) }}</td>
+        <td style="text-align:right">{{ summary[metric]['Total']|round(2) }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+</div>
+<hr/>
+<div id='chart' class='chart'”></div>
+<hr/>
+<div id='chart2' class='chart'”></div>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{fig1_json | safe}};
+  Plotly.plot('chart',graphs,{});
+  var graphs2 = {{fig2_json | safe}};
+  Plotly.plot('chart2',graphs2,{});
+</script>
+
+
+{% endblock content %}
