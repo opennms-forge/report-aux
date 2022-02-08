@@ -2,9 +2,9 @@
     <select name="vip" id="vip">
     {% for vip in vips %}
         {% if vip == selected_vip %}
-            <option value="/vip/{{vip}}" selected>{{vip}}</option>
+            <option value="{{vip}}" selected>{{vip}}</option>
         {% else %}
-            <option value="/vip/{{vip}}">{{vip}}</option>
+            <option value="{{vip}}">{{vip}}</option>
         {% endif %}
     {% endfor %}
     </select>

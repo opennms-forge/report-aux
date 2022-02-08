@@ -4,24 +4,24 @@ from models import Day
 
 from requests.auth import HTTPBasicAuth
 from urllib.parse import quote
-from pprint import pprint
 from datetime import datetime
 import requests
 import numpy as np
 import collections
 import time
 import json
+import logging
 
 def get_data(url:str, auth:HTTPBasicAuth) -> dict:
     headers = {'Accept': 'application/json'}
-    print('Getting data from: ' + url)
+    logging.info('Getting data from: ' + url)
     data = requests.get(url, auth=auth, headers=headers)
     return data.json()
 
 
 def post_data(url:str, auth:HTTPBasicAuth, payload) -> dict:
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
-    print(f"Getting data from: {url}/{payload['source'][0]['resourceId']}")
+    logging.info(f"Getting data from: {url}/{payload['source'][0]['resourceId']}")
     data = requests.post(url, auth=auth, headers=headers, data=json.dumps(payload))
     return data.json()
 
@@ -291,7 +291,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, rrds:list) -> dict:
             parsed_metrics[interface] = average_lists(parsed_metrics[interface])
 
     end_time = time.time()
-    print(f'Time to process {loop_count} interfaces: {end_time - start_time}')
+    logging.info(f'Time to process {loop_count} interfaces: {end_time - start_time}')
     return parsed_metrics
 
 

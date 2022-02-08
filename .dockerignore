@@ -1,0 +1,12 @@
+*.json
+*.ipynb
+**/*.json
+*/*.ipynb
+
+
+flask_session
+__pycache__
+ra_config
+*/flask_session
+*/__pycache__
+*/ra_config

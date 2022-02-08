@@ -165,3 +165,4 @@ local_test/
 ra_config/*.json
 src/ra_config/*.json
 parsed_data.json
+src/flask_session/

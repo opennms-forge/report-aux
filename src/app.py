@@ -1,6 +1,7 @@
 # app.py
 
 from flask import Flask, render_template, request, session, redirect, url_for
+from flask_session import Session
 from requests.auth import HTTPBasicAuth
 
 import json
@@ -8,6 +9,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import uuid
+import logging
 
 import ra_processing
 import trending
@@ -23,8 +25,11 @@ nodes = nodes['nodes']
 f.close()
 
 web = Flask(__name__)
-web.secret_key = 'hello there' # str(uuid.uuid4())
-
+SESSION_TYPE = 'filesystem'
+SESSION_PERMANENT = False
+web.secret_key = str(uuid.uuid4())
+web.config.from_object(__name__)
+Session(web)
 
 def byte_metrics(metrics:list) -> list:
     metrics = [metric for metric in metrics if 'Bytes' in metric]
@@ -49,22 +54,20 @@ def get_data() -> dict:
     session['interfaces'] = interfaces
     session['metrics'] = metrics
     parsed_metrics = ra_processing.main(RA_url, RAauth, interfaces, metrics)
-    #session['parsed_metrics'] = parsed_metrics
-    print(parsed_metrics)
+    session['parsed_metrics'] = parsed_metrics
     return parsed_metrics
 
 
 @web.route('/clear')
 def clear_cache():
-    for item in session:
-        session.pop(item)
+    session.clear()
     redirect = url_for('home_page')
 
 @web.route('/select')
 def vip_list():
     if 'parsed_metrics' not in session:
-        parsed_metrics = get_data()
-    vips = [vip.replace('/Common/', '') for vip in parsed_metrics if '/Common/' in vip]
+        get_data()
+    vips = [vip.replace('/Common/', '') for vip in session['parsed_metrics'] if '/Common/' in vip]
     #vips = ['Changepoint-VIP']
     return render_template('vip_list.html', vips=vips)
 
@@ -73,6 +76,8 @@ def blank_page():
     return "Hello"
 
 @web.route('/')
+@web.route('/vip')
+@web.route('/vip/')
 @web.route('/vip/<vip>')
 def home_page(vip:str=None):
     if 'parsed_metrics' not in session:
