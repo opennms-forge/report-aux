@@ -6,21 +6,18 @@
     <div class="navbar-collapse collapse" id="myNavbar">
         <ul class="nav navbar-nav mr-auto">
             <li class="nav-item"><a class="nav-link" href="{{url_for('home_page')}}">Home</a></li>
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
-                <ul class="dropdown-menu">
-                    {% for vip in vips %}
-                        <li><a class="dropdown-item" href="{{url_for('home_page', vip=vip)}}">{{vip}}</a></li>
-                    {% endfor %}
-                </ul>
-            </li>
-            {% if selected_vip %}
-                <li class="nav-item"><a class="nav-link" href="{{url_for('pdf', vip=selected_vip)}}">PDF</a></li>
+            {% if vips %}
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
+                    <ul class="dropdown-menu vip-menu">
+                        {% for vip in vips %}
+                            <li><a class="dropdown-item" href="{{url_for('home_page', vip=vip)|safe}}">{{vip}}</a></li>
+                        {% endfor %}
+                    </ul>
+                </li>
             {% endif %}
+            <li class="nav-item"><a class="nav-link" href="{{url_for('top_n_page')}}">TopN</a></li>
             <li class="nav-item"><a class="nav-link" href="{{url_for('settings_page')}}">Settings</a></li>
         </ul>
-        <span class="navbar-text">
-            {{selected_vip}}
-        </span>
     </div>
 </nav>

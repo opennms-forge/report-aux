@@ -16,25 +16,6 @@ import trending
 import export
 #import remote_admin as data
 
-global config
-
-def update_settings(settings:dict={"url":None, "username": None, "password": None}):
-    f = open('ra_config/config.json', 'w')
-    json.dump(settings, f)
-    f.close()
-    config = settings
-
-if exists('ra_config/config.json'):
-    f = open('ra_config/config.json')
-    config = json.load(f)
-    f.close()
-else:
-    config = update_settings()
-
-f = open('ra_config/node_pairs.json')
-nodes = json.load(f)
-nodes = nodes['nodes']
-f.close()
 
 web = Flask(__name__)
 SESSION_TYPE = 'filesystem'
@@ -43,6 +24,29 @@ web.secret_key = str(uuid.uuid4())
 web.config.from_object(__name__)
 Session(web)
 
+
+def update_settings(settings:dict={"url":None, "username": None, "password": None}):
+    f = open('ra_config/config.json', 'w')
+    json.dump(settings, f)
+    f.close()
+    web.my_config = settings
+
+if exists('ra_config/config.json'):
+    f = open('ra_config/config.json')
+    web.my_config = json.load(f)
+    f.close()
+else:
+    update_settings()
+
+f = open('ra_config/node_pairs.json')
+nodes = json.load(f)
+nodes = nodes['nodes']
+f.close()
+
+@web.template_filter()
+def numberFormat(value):
+    return "{:,.2f}".format(int(value))
+
 def byte_metrics(metrics:list) -> list:
     metrics = [metric for metric in metrics if 'Bytes' in metric]
     metrics.reverse()
@@ -50,8 +54,8 @@ def byte_metrics(metrics:list) -> list:
 
 
 def get_data(redirect:redirect) -> dict:
-    RA_url = config['url']
-    RAauth = HTTPBasicAuth(config['username'], config['password'])
+    RA_url = web.my_config['url']
+    RAauth = HTTPBasicAuth(web.my_config['username'], web.my_config['password'])
 
     interfaces = []
     metrics = []
@@ -92,7 +96,7 @@ def blank_page():
 @web.route('/vip/')
 @web.route('/vip/<vip>')
 def home_page(vip:str=None):
-    if config['url'] is None:
+    if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
         get_data(url_for('home_page', vip=vip))
@@ -161,7 +165,7 @@ def pdf(vip:str=None):
         plotly.io.write_image(fig2, file="temp/fig2.png", format='png', width=900, height=500)
 
         pdf = export.generate_pdf(vip)
-        pdf.add_summary(summary, 10, 30)
+        pdf.interface_summary(summary, 10, 30)
         pdf.add_image('temp/fig1.png', 10, 70)
         pdf.add_image('temp/fig2.png', 10, 170)
 
@@ -172,13 +176,22 @@ def pdf(vip:str=None):
     else:
         return render_template('graph.html', vips=vips)
 
+@web.route('/topn')
+@web.route('/topn/')
+@web.route('/topn/<metric>')
+def top_n_page(metric:str=None):
+    if 'parsed_metrics' not in session:
+        return redirect(url_for('home_page'))
+    vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
+    if metric in session['parsed_metrics']['top_n']:
+        top_n = {metric: session['parsed_metrics']['top_n'][metric]}
+    else:
+        top_n = session['parsed_metrics']['top_n']
+    return render_template('top_n.html', vips=vips, selected_metric=metric, top_n=top_n)
+
+
 @web.route('/settings', methods=['GET', 'POST'])
 def settings_page():
     if request.method == 'POST':
         update_settings(request.form.to_dict())
-    if 'parsed_metrics' not in session and config['url'] is not None:
-        get_data(url_for('settings_page'))
-        vips = [vip.replace('/Common/', '') for vip in session['parsed_metrics'] if '/Common/' in vip]
-    else:
-        vips = []
-    return render_template('settings.html', vips=vips, config=config)
+    return render_template('settings.html', config=web.my_config)

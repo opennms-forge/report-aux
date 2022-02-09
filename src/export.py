@@ -2,6 +2,10 @@
 
 from fpdf import FPDF, HTMLMixin
 
+def numberFormat(value):
+    return "{:,.2f}".format(int(value))
+
+
 class PDF(FPDF, HTMLMixin):
     def __init__(self) -> None:
         super().__init__(orientation='P', unit='mm')
@@ -17,19 +21,22 @@ class PDF(FPDF, HTMLMixin):
 
     def template_page(self, page_name:str):
         self.add_page()
+        self.start_section(page_name)
         self.set_fill_color(r=180, g=182, b=200)
         self.rect(5.0, 5.0, 200.0,20.0, style='FD')
         self.set_xy(6.0,7.0)
         self.image('static/images/OpenNMS_Horizontal-Logo_Light-BG-retina-website.png', link='', type='', h=7)
         self.set_xy(6.0,16.0)
         self.image('ra_config/logo.png', link='', type='', h=7)
+        self.set_xy(160.0,7.0)
+        self.image('ra_config/logo_customer.png', link='', type='', h=7)
         self.titles(page_name)
 
     def add_image(self, image_path:str, x:int, y:int):
         self.set_xy(x, y)
         self.image(image_path, link='', type='', h=100.0)
 
-    def add_summary(self, summary:dict, x:int, y:int):
+    def interface_summary(self, summary:dict, x:int, y:int):
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         table_html = """
@@ -43,10 +50,10 @@ class PDF(FPDF, HTMLMixin):
                 </tr>"""
         for  metric in summary:
             table_html += f"<tr><td>{metric}</td>"
-            table_html += f'<td align="right">{round(summary[metric]["Min"],2)}</td>'
-            table_html += f'<td align="right">{round(summary[metric]["Average"],2)}</td>'
-            table_html += f'<td align="right">{round(summary[metric]["Max"],2)}</td>'
-            table_html += f'<td align="right">{round(summary[metric]["Total"],2)}</td></tr>'
+            table_html += f'<td align="right"><font face="Courier">{numberFormat(summary[metric]["Min"])}</font></td>'
+            table_html += f'<td align="right"><font face="Courier">{numberFormat(summary[metric]["Average"])}</font></td>'
+            table_html += f'<td align="right"><font face="Courier">{numberFormat(summary[metric]["Max"])}</font></td>'
+            table_html += f'<td align="right"><font face="Courier">{numberFormat(summary[metric]["Total"])}</font></td></tr>'
         table_html += "</table>"
         self.write_html(table_html)
 

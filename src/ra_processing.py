@@ -2,6 +2,7 @@
 
 from models import Day
 
+from collections import Counter
 from requests.auth import HTTPBasicAuth
 from urllib.parse import quote
 from datetime import datetime
@@ -55,7 +56,39 @@ def average_lists(parsed_metrics:dict) -> dict:
         for day in range(0,7):
             parsed_metrics['day_of_week'][day][hour] = average_metrics(parsed_metrics['day_of_week'][day][hour])
             parsed_metrics['day_of_week'][day]['total'] = average_metrics(parsed_metrics['day_of_week'][day]['total'])
+    for metric in parsed_metrics['summary']:
+        parsed_metrics['summary'] = average_metrics(parsed_metrics['summary'])
     return parsed_metrics
+
+
+def top_n_stats(parsed_metrics:dict) -> dict:
+    top_n = {}
+    sorted_top_n = {}
+    for interface in parsed_metrics:
+        if 'node[' not in interface:
+            for metric in parsed_metrics[interface]['summary']:
+                if top_n.get(metric):
+                    top_n[metric][interface] = parsed_metrics[interface]['summary'][metric]
+                else:
+                    top_n[metric] = {interface: parsed_metrics[interface]['summary'][metric]}
+    for metric in top_n:
+        d = Counter(top_n[metric])
+        sorted_top_n[metric] = {}
+        for k,v in d.most_common():
+            sorted_top_n[metric][k] = v
+    return sorted_top_n
+
+
+def device_stats(parsed_metrics:dict) -> dict:
+    device = {}
+    for interface in parsed_metrics:
+        if 'node[' not in interface:
+            for metric in parsed_metrics[interface]['summary']:
+                if device.get(metric):
+                    device[metric].append(parsed_metrics[interface]['summary'][metric])
+                else:
+                    device[metric] = [parsed_metrics[interface]['summary'][metric]]
+    return device
 
 
 def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth) -> dict:
@@ -168,6 +201,11 @@ def add_metrics2(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth
             parsed_metrics[label]['hour_of_day'][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
             parsed_metrics[label]['day_of_week'][day][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
 
+        if parsed_metrics[label]['summary'].get(metric):
+            parsed_metrics[label]['summary'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+        else:
+            parsed_metrics[label]['summary'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
+
     parsed_metrics[label]['ts'] = dict(collections.OrderedDict(sorted(parsed_metrics[label]['ts'].items())))
 
     return parsed_metrics
@@ -252,6 +290,11 @@ def add_metrics3(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth
                 parsed_metrics[label]['hour_of_day'][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
                 parsed_metrics[label]['day_of_week'][day][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
 
+            if parsed_metrics[label]['summary'].get(metric):
+                parsed_metrics[label]['summary'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+            else:
+                parsed_metrics[label]['summary'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
+
     parsed_metrics[label]['ts'] = dict(collections.OrderedDict(sorted(parsed_metrics[label]['ts'].items())))
 
     return parsed_metrics
@@ -275,7 +318,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, rrds:list) -> dict:
 
     for interface in interfaces:
         loop_count += 1
-        if loop_count > 5:
+        if loop_count > 599:
             break
         parsed_metrics[interface] = {'ts':{}}
 
@@ -288,6 +331,9 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, rrds:list) -> dict:
     for interface in parsed_metrics:
         if 'node[' not in interface:
             parsed_metrics[interface] = average_lists(parsed_metrics[interface])
+
+    parsed_metrics['top_n'] = top_n_stats(parsed_metrics)
+    parsed_metrics['device'] = device_stats(parsed_metrics)
 
     end_time = time.time()
     print(f'Time to process {loop_count} interfaces: {end_time - start_time}')

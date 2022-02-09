@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+  <a href="{{url_for('top_n_page', metric=none)}}">All Metrics</a> |
+  {% for metric in session['parsed_metrics']['top_n']  %}
+    <a href="{{url_for('top_n_page', metric=metric)}}">{{metric}}</a> {% if not loop.last %} | {% endif %}
+  {% endfor %}
+</div>
+<div>
+  {% for metric in top_n  %}
+    <table class="table">
+      <thead>
+        <th>VIP</th>
+        <th>{{metric}}</th>
+      </thead>
+      <tbody>
+        {% for site in top_n[metric] %}
+          <tr>
+            <td>
+              <a href="{{url_for('home_page', vip=site[8:])|safe}}">{{site}}</a>
+            </td>
+            <td>
+              {{top_n[metric][site]}}
+            </Td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endfor %}
+</div>
+{% endblock content %}

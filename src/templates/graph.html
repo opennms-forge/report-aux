@@ -1,6 +1,11 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
+  <h1>{{selected_vip}}</h1>
+  <a class="btn btn-info" href="{{url_for('pdf', vip=selected_vip)|safe}}">Generate PDF</a>
+</div>
+
+<div>
   <table class="table">
     <tr>
       <th>Metric</th>
@@ -12,10 +17,10 @@
     {% for metric in summary %}
       <tr>
         <td>{{ metric }}</td>
-        <td style="text-align:right">{{ summary[metric]['Min']|round(2) }}</td>
-        <td style="text-align:right">{{ summary[metric]['Average']|round(2) }}</td>
-        <td style="text-align:right">{{ summary[metric]['Max']|round(2) }}</td>
-        <td style="text-align:right">{{ summary[metric]['Total']|round(2) }}</td>
+        <td style="text-align:right">{{ summary[metric]['Min']|numberFormat }}</td>
+        <td style="text-align:right">{{ summary[metric]['Average']|numberFormat }}</td>
+        <td style="text-align:right">{{ summary[metric]['Max']|numberFormat }}</td>
+        <td style="text-align:right">{{ summary[metric]['Total']|numberFormat }}</td>
       </tr>
     {% endfor %}
   </table>

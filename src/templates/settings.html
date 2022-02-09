@@ -4,7 +4,7 @@
   <h1>Settings</h1>
 </div>
 
-<form action="{{url_for('settings_page')}}" method="POST">
+<form action="{{url_for('settings_page')}}" method="POST" enctype="multipart/form-data">
 {% for setting in config %}
   <div class="mb-3">
     <label for="{{setting}}" class="form-label">{{setting}}</label>
