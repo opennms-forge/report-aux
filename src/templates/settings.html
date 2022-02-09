@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+  <h1>Settings</h1>
+</div>
+
+<form action="{{url_for('settings_page')}}" method="POST">
+{% for setting in config %}
+  <div class="mb-3">
+    <label for="{{setting}}" class="form-label">{{setting}}</label>
+    <input type="{{setting if setting == 'password' else 'text'}}" class="form-control" name="{{setting}}" id="{{setting}}" value="{{config[setting]}}">
+  </div>
+{% endfor %}
+<input type="submit" id="submit" value="Save" />
+</form>
+
+{% endblock content %}

@@ -1,0 +1,26 @@
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <a class="navbar-brand" href="/">Reporting</a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#myNavbar" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="navbar-collapse collapse" id="myNavbar">
+        <ul class="nav navbar-nav mr-auto">
+            <li class="nav-item"><a class="nav-link" href="{{url_for('home_page')}}">Home</a></li>
+            <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
+                <ul class="dropdown-menu">
+                    {% for vip in vips %}
+                        <li><a class="dropdown-item" href="{{url_for('home_page', vip=vip)}}">{{vip}}</a></li>
+                    {% endfor %}
+                </ul>
+            </li>
+            {% if selected_vip %}
+                <li class="nav-item"><a class="nav-link" href="{{url_for('pdf', vip=selected_vip)}}">PDF</a></li>
+            {% endif %}
+            <li class="nav-item"><a class="nav-link" href="{{url_for('settings_page')}}">Settings</a></li>
+        </ul>
+        <span class="navbar-text">
+            {{selected_vip}}
+        </span>
+    </div>
+</nav>

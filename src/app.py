@@ -1,23 +1,35 @@
 # app.py
 
-from flask import Flask, render_template, request, session, redirect, url_for
+from flask import Flask, render_template, request, session, redirect, url_for, make_response, flash
 from flask_session import Session
 from requests.auth import HTTPBasicAuth
+from os.path import exists
 
 import json
 import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import uuid
-import logging
 
 import ra_processing
 import trending
+import export
 #import remote_admin as data
 
-f = open('ra_config/config.json')
-config = json.load(f)
-f.close()
+global config
+
+def update_settings(settings:dict={"url":None, "username": None, "password": None}):
+    f = open('ra_config/config.json', 'w')
+    json.dump(settings, f)
+    f.close()
+    config = settings
+
+if exists('ra_config/config.json'):
+    f = open('ra_config/config.json')
+    config = json.load(f)
+    f.close()
+else:
+    config = update_settings()
 
 f = open('ra_config/node_pairs.json')
 nodes = json.load(f)
@@ -37,7 +49,7 @@ def byte_metrics(metrics:list) -> list:
     return metrics
 
 
-def get_data() -> dict:
+def get_data(redirect:redirect) -> dict:
     RA_url = config['url']
     RAauth = HTTPBasicAuth(config['username'], config['password'])
 
@@ -55,18 +67,18 @@ def get_data() -> dict:
     session['metrics'] = metrics
     parsed_metrics = ra_processing.main(RA_url, RAauth, interfaces, metrics)
     session['parsed_metrics'] = parsed_metrics
-    return parsed_metrics
+    return redirect
 
 
 @web.route('/clear')
 def clear_cache():
     session.clear()
-    redirect = url_for('home_page')
+    return redirect(url_for('home_page'))
 
 @web.route('/select')
 def vip_list():
     if 'parsed_metrics' not in session:
-        get_data()
+        get_data(url_for('vip_list'))
     vips = [vip.replace('/Common/', '') for vip in session['parsed_metrics'] if '/Common/' in vip]
     #vips = ['Changepoint-VIP']
     return render_template('vip_list.html', vips=vips)
@@ -80,8 +92,10 @@ def blank_page():
 @web.route('/vip/')
 @web.route('/vip/<vip>')
 def home_page(vip:str=None):
+    if config['url'] is None:
+        return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
-        get_data()
+        get_data(url_for('home_page', vip=vip))
     vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
     if not vip:
         vip = request.args.get('vip')
@@ -122,3 +136,49 @@ def get_trend_line(stats:dict, stats2:dict, weekends:dict) -> go.Figure:
         fig2.add_vrect(x0=weekend[0], x1=weekend[1], fillcolor="LightSalmon", opacity=0.5, layer="below", line_width=0)
     #fig.add_vrect(x0=4.5, x1=6.5, fillcolor="LightSalmon", opacity=0.5, layer="below", line_width=0)
     return fig2
+
+@web.route('/pdf/<vip>')
+def pdf(vip:str=None):
+    if 'parsed_metrics' not in session:
+        return redirect(url_for('home_page', vip=vip))
+    vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
+    if not vip:
+        vip = request.args.get('vip')
+    if not vip:
+        vip = 'Changepoint-VIP'
+    if vip in vips:
+        interface = '/Common/' + vip
+        weekends = trending.find_weekends(session['parsed_metrics'], interface)
+        trend_time = trending.time_trend(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
+        trend_line = trending.time_lines(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
+
+        summary = trending.summary_stats(session['parsed_metrics'], interface, session['metrics'])
+
+        fig1 = get_trend_graph(trend_time)
+        fig2 = get_trend_line(trend_line[0], trend_line[1], weekends)
+
+        plotly.io.write_image(fig1, file="temp/fig1.png", format='png', width=900, height=500)
+        plotly.io.write_image(fig2, file="temp/fig2.png", format='png', width=900, height=500)
+
+        pdf = export.generate_pdf(vip)
+        pdf.add_summary(summary, 10, 30)
+        pdf.add_image('temp/fig1.png', 10, 70)
+        pdf.add_image('temp/fig2.png', 10, 170)
+
+        response = make_response(pdf.output())
+        response.headers.set('Content-Disposition', 'attachment', filename=vip + '.pdf')
+        response.headers.set('Content-Type', 'application/pdf')
+        return response
+    else:
+        return render_template('graph.html', vips=vips)
+
+@web.route('/settings', methods=['GET', 'POST'])
+def settings_page():
+    if request.method == 'POST':
+        update_settings(request.form.to_dict())
+    if 'parsed_metrics' not in session and config['url'] is not None:
+        get_data(url_for('settings_page'))
+        vips = [vip.replace('/Common/', '') for vip in session['parsed_metrics'] if '/Common/' in vip]
+    else:
+        vips = []
+    return render_template('settings.html', vips=vips, config=config)
