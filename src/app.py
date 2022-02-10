@@ -27,7 +27,16 @@ web.config.from_object(__name__)
 Session(web)
 
 def clear_temp(session:bool=False):
-    pass
+    if session:
+        session_files = os.scandir('flask_session')
+        for file in session_files:
+            os.remove(file.path)
+    temp_files = os.scandir('temp')
+    for file in temp_files:
+        if '.readme' not in file.name:
+            os.remove(file.path)
+
+clear_temp(session=False)
 
 def update_settings(settings:dict={}):
     new_settings = {}
@@ -139,6 +148,7 @@ def clear_cache(new_pair:int=0):
         if cookie in session:
             session.pop(cookie)
     session['new_pair'] = int(new_pair)
+    clear_temp()
     return redirect(url_for('home_page'))
 
 @web.route('/select')
@@ -212,6 +222,7 @@ def node_pdf():
         return redirect(url_for('home_page'))
     pdf = export.generate_pdf(session['pair']['name'], 'Summary')
     pdf.interface_summary(session['parsed_metrics']['node[device]']['stats'], 10, 30)
+    pdf.top_n_summary(session['parsed_metrics']['node[top_n]'], 10, 70)
     for vip in session['vips']:
         interface = '/Common/' + vip
         weekends = trending.find_weekends(session['parsed_metrics'], interface)
@@ -225,9 +236,9 @@ def node_pdf():
         pdf.interface_summary(session['parsed_metrics'][interface]['stats'], 10, 30)
 
         plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 170)
+        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
         plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
-        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 70)
+        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
 
 
     response = make_response(pdf.output())
@@ -252,13 +263,13 @@ def vip_pdf(vip:str=None):
         fig1 = get_trend_graph(trend_time)
         fig2 = get_trend_line(trend_line[0], trend_line[1], weekends)
 
-        plotly.io.write_image(fig1, file="temp/fig1.png", format='png', width=900, height=500)
-        plotly.io.write_image(fig2, file="temp/fig2.png", format='png', width=900, height=500)
+        plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
+        plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
 
         pdf = export.generate_pdf(session['pair']['name'], vip)
         pdf.interface_summary(session['parsed_metrics'][interface]['stats'], 10, 30)
-        pdf.add_image('temp/fig1.png', 10, 70)
-        pdf.add_image('temp/fig2.png', 10, 170)
+        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
+        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
 
         response = make_response(pdf.output())
         response.headers.set('Content-Disposition', 'attachment', filename=vip + '.pdf')

@@ -201,7 +201,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
 
     for interface in interfaces:
         loop_count += 1
-        if loop_count > 10:
+        if loop_count > 1099:
             break
         parsed_metrics[interface] = {'ts':{}}
 
