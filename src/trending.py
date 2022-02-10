@@ -1,5 +1,7 @@
 # trending
 
+from ast import In
+from re import I
 import numpy as np
 from datetime import datetime
 from types import DynamicClassAttribute
@@ -109,11 +111,14 @@ def summary_stats(parsed_metrics:dict, interface:str, metrics:list) -> dict:
     summary = {}
     raw = {}
 
-    for metric in metrics:
-        raw[metric] = []
-        for ts in parsed_metrics[interface]['ts']:
-            raw[metric].append(parsed_metrics[interface]['ts'][ts].get(metric))
-        raw[metric] = [item for item in raw[metric] if item is not None]
+    if interface == 'node[device]':
+        raw = parsed_metrics[interface]
+    else:
+        for metric in metrics:
+            raw[metric] = []
+            for ts in parsed_metrics[interface]['ts']:
+                raw[metric].append(parsed_metrics[interface]['ts'][ts].get(metric))
+            raw[metric] = [item for item in raw[metric] if item is not None]
 
     for metric in metrics:
         summary[metric] = {}

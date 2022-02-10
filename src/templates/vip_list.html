@@ -17,6 +17,13 @@
         }
     </script>
 </div>
-<div>
-    <a href="{{url_for('pdf', vip=selected_vip)}}">PDF</a>
+
+
+<div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Select F5 Pair</button>
+    <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+        {% for pair in pairs %}
+            <li><a class="drowdown-item" href="{{url_for('clear_cache', new_pair=pair)}}">{{pair}}:{{pairs[pair]}}</a></li>
+        {% endfor %}
+    </ul>
 </div>

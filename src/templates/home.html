@@ -1,8 +1,7 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
-  <h1>{{selected_vip}}</h1>
-  <a class="btn bg-primary text-light" href="{{url_for('pdf', vip=selected_vip)|safe}}">Generate PDF</a>
+  <h1>Reporting</h1>
 </div>
 
 <div>
@@ -25,17 +24,5 @@
     {% endfor %}
   </table>
 </div>
-<hr/>
-<div id='chart' class='chart'”></div>
-<hr/>
-<div id='chart2' class='chart'”></div>
-<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-<script type='text/javascript'>
-  var graphs = {{fig1_json | safe}};
-  Plotly.plot('chart',graphs,{});
-  var graphs2 = {{fig2_json | safe}};
-  Plotly.plot('chart2',graphs2,{});
-</script>
-
 
 {% endblock content %}

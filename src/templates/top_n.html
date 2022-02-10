@@ -2,7 +2,7 @@
 {% block content %}
 <div>
   <a href="{{url_for('top_n_page', metric=none)}}">All Metrics</a> |
-  {% for metric in session['parsed_metrics']['top_n']  %}
+  {% for metric in session['parsed_metrics']['node[top_n]']  %}
     <a href="{{url_for('top_n_page', metric=metric)}}">{{metric}}</a> {% if not loop.last %} | {% endif %}
   {% endfor %}
 </div>
@@ -17,10 +17,10 @@
         {% for site in top_n[metric] %}
           <tr>
             <td>
-              <a href="{{url_for('home_page', vip=site[8:])|safe}}">{{site}}</a>
+              <a href="{{url_for('vip_page', vip=site[8:])|safe}}">{{site}}</a>
             </td>
-            <td>
-              {{top_n[metric][site]}}
+            <td style="text-align:right">
+              {{top_n[metric][site]|numberFormat}}
             </Td>
           </tr>
         {% endfor %}

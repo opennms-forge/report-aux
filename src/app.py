@@ -10,6 +10,7 @@ import plotly
 import plotly.express as px
 import plotly.graph_objects as go
 import uuid
+import base64
 
 import ra_processing
 import trending
@@ -25,23 +26,38 @@ web.config.from_object(__name__)
 Session(web)
 
 
-def update_settings(settings:dict={"url":None, "username": None, "password": None}):
-    f = open('ra_config/config.json', 'w')
-    json.dump(settings, f)
-    f.close()
-    web.my_config = settings
+def update_settings(settings:dict={}):
+    new_settings = {}
+    update = False
+    if exists('ra_config/config.json'):
+        f = open('ra_config/config.json')
+        old_settings = json.load(f)
+        f.close()
+        new_settings = old_settings
+        if settings:
+            for setting in settings:
+                if old_settings.get(setting) != settings[setting]:
+                    new_settings[setting] = settings[setting]
+                    update = True
+    else:
+        if settings:
+            new_settings = settings
+            update = True
+        else:
+            new_settings = {"url":None, "username": None, "password": None, "nodes":[]}
+            update = True
+    if new_settings.get('nodes'):
+        if type(new_settings['nodes']) == str:
+            new_settings['nodes'] = json.loads(new_settings['nodes'])
+    if update:
+        f = open('ra_config/config.json', 'w')
+        json.dump(new_settings, f)
+        f.close()
+        flash('Settings Updated')
+    web.my_config = new_settings
 
-if exists('ra_config/config.json'):
-    f = open('ra_config/config.json')
-    web.my_config = json.load(f)
-    f.close()
-else:
-    update_settings()
+update_settings()
 
-f = open('ra_config/node_pairs.json')
-nodes = json.load(f)
-nodes = nodes['nodes']
-f.close()
 
 @web.template_filter()
 def numberFormat(value):
@@ -60,13 +76,24 @@ def get_data(redirect:redirect) -> dict:
     interfaces = []
     metrics = []
 
-    for node in nodes[0]:
+    if not session.get('new_pair'):
+        session['new_pair'] = 0
+    session['pair'] = {"nodes":{}}
+    pair = [label for label in session['pair']['nodes']]
+    if not pair:
+        pair = web.my_config["nodes"][session['new_pair']]
+
+    for node in pair:
         interface_list = ra_processing.get_interfaces(RA_url, RAauth, node)
+        session['pair']['nodes'][node] = {'label':interface_list['label'], 'name': interface_list['name']}
+        session['pair']['nodes'][node]['ip'] = session['pair']['nodes'][node]['label'].split(' ')[0]
+        session['pair']['nodes'][node]['label'] = session['pair']['nodes'][node]['label'].split(' ')[1][1:-1]
         #node_list = [interface_list['label']]
         interfaces_a, metrics_a = ra_processing.filter_interfaces(interface_list)
         [interfaces.append(interface) for interface in interfaces_a if interface not in interfaces]
         [metrics.append(metric) for metric in metrics_a if metric not in metrics]
 
+    session['pair']['name'] = ":".join([session['pair']['nodes'][node]['label'] for node in session['pair']['nodes']])
     session['interfaces'] = interfaces
     session['metrics'] = metrics
     parsed_metrics = ra_processing.main(RA_url, RAauth, interfaces, metrics)
@@ -75,8 +102,10 @@ def get_data(redirect:redirect) -> dict:
 
 
 @web.route('/clear')
-def clear_cache():
+@web.route('/clear/<new_pair>')
+def clear_cache(new_pair:int=0):
     session.clear()
+    session['new_pair'] = int(new_pair)
     return redirect(url_for('home_page'))
 
 @web.route('/select')
@@ -85,21 +114,35 @@ def vip_list():
         get_data(url_for('vip_list'))
     vips = [vip.replace('/Common/', '') for vip in session['parsed_metrics'] if '/Common/' in vip]
     #vips = ['Changepoint-VIP']
-    return render_template('vip_list.html', vips=vips)
+    pairs = {}
+    for i in range(0, len(web.my_config['nodes'])):
+        pairs[i] = web.my_config['nodes'][i]
+    return render_template('vip_list.html', vips=vips, pairs=pairs)
 
 @web.route('/blank')
 def blank_page():
     return "Hello"
 
 @web.route('/')
-@web.route('/vip')
-@web.route('/vip/')
-@web.route('/vip/<vip>')
-def home_page(vip:str=None):
+def home_page():
     if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
-        get_data(url_for('home_page', vip=vip))
+        get_data(url_for('home_page'))
+    vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
+
+    device_summary = trending.summary_stats(session['parsed_metrics'], 'node[device]', session['metrics'])
+
+    return render_template('home.html', vips=vips, summary=device_summary)
+
+@web.route('/vip')
+@web.route('/vip/')
+@web.route('/vip/<vip>')
+def vip_page(vip:str=None):
+    if web.my_config['url'] is None:
+        return redirect(url_for('settings_page'))
+    if 'parsed_metrics' not in session:
+        get_data(url_for('vip_page', vip=vip))
     vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
     if not vip:
         vip = request.args.get('vip')
@@ -144,7 +187,7 @@ def get_trend_line(stats:dict, stats2:dict, weekends:dict) -> go.Figure:
 @web.route('/pdf/<vip>')
 def pdf(vip:str=None):
     if 'parsed_metrics' not in session:
-        return redirect(url_for('home_page', vip=vip))
+        return redirect(url_for('vip_page', vip=vip))
     vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
     if not vip:
         vip = request.args.get('vip')
@@ -176,17 +219,18 @@ def pdf(vip:str=None):
     else:
         return render_template('graph.html', vips=vips)
 
+
 @web.route('/topn')
 @web.route('/topn/')
 @web.route('/topn/<metric>')
 def top_n_page(metric:str=None):
     if 'parsed_metrics' not in session:
-        return redirect(url_for('home_page'))
+        return redirect(url_for('vip_page'))
     vips = [vip_name.replace('/Common/', '') for vip_name in session['parsed_metrics'] if '/Common/' in vip_name]
-    if metric in session['parsed_metrics']['top_n']:
-        top_n = {metric: session['parsed_metrics']['top_n'][metric]}
+    if metric in session['parsed_metrics']['node[top_n]']:
+        top_n = {metric: session['parsed_metrics']['node[top_n]'][metric]}
     else:
-        top_n = session['parsed_metrics']['top_n']
+        top_n = session['parsed_metrics']['node[top_n]']
     return render_template('top_n.html', vips=vips, selected_metric=metric, top_n=top_n)
 
 
@@ -194,4 +238,16 @@ def top_n_page(metric:str=None):
 def settings_page():
     if request.method == 'POST':
         update_settings(request.form.to_dict())
-    return render_template('settings.html', config=web.my_config)
+    with open('ra_config/logo.png', 'rb') as f:
+        logoimage = base64.b64encode(f.read()).decode('utf-8')
+    with open('ra_config/logo_customer.png', 'rb') as f:
+        logocustomer= base64.b64encode(f.read()).decode('utf-8')
+    config = dict(web.my_config)
+    config['nodes'] = json.dumps(config['nodes'])
+    if not session.get('pair_list'):
+        pairs = [list(i) for i in web.my_config['nodes']]
+        for i in range(0, len(pairs)):
+            for node in range(0, len(pairs[i])):
+                pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
+        session['pair_list'] = pairs
+    return render_template('settings.html', config=config, logoimage=logoimage, logocustomer=logocustomer)

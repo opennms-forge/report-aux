@@ -1,17 +1,54 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
-  <h1>Settings</h1>
+  <h1>Application Settings</h1>
 </div>
 
-<form action="{{url_for('settings_page')}}" method="POST" enctype="multipart/form-data">
-{% for setting in config %}
-  <div class="mb-3">
-    <label for="{{setting}}" class="form-label">{{setting}}</label>
-    <input type="{{setting if setting == 'password' else 'text'}}" class="form-control" name="{{setting}}" id="{{setting}}" value="{{config[setting]}}">
+<div>
+  <h2>Connection Settings</h2>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+      {% for message in messages %}
+        <span class="badge bg-danger text-light">{{ message }}</span>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+  <form action="{{url_for('settings_page')}}" method="POST" enctype="multipart/form-data">
+  {% for setting in config %}
+    <div class="mb-3">
+      {% if setting == 'password' %}
+        <label for="{{setting}}" class="form-label">{{setting}}</label>
+        <input type="password" class="form-control" name="{{setting}}" id="{{setting}}" value="{{config[setting]}}"/>
+        {% elif setting == 'nodes' %}
+        <label for="{{setting}}" class="form-label">{{setting}} (must be a valid JSON array)</label>
+        <textarea class="form-control" name="{{setting}}" id="{{setting}}" rows="5">{{config[setting]}}</textarea>
+      {% else %}
+      <label for="{{setting}}" class="form-label">{{setting}}</label>
+      <input type="text" class="form-control" name="{{setting}}" id="{{setting}}" value="{{config[setting]}}"/>
+      {% endif %}
+    </div>
+  {% endfor %}
+  <input type="submit" id="submit" value="Save" />
+  </form>
+</div>
+<br/>
+{% if session['pair_list'] %}
+  <div class="dropdown">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Select F5 Pair</button>
+    <ul class="dropdown-menu vip-menu" aria-labelledby="dropdownMenuButton1">
+        {% for pair in session['pair_list'] %}
+            <li><a class="drowdown-item" href="{{url_for('clear_cache', new_pair=loop.index0)}}">{{pair}}</a></li>
+        {% endfor %}
+    </ul>
   </div>
-{% endfor %}
-<input type="submit" id="submit" value="Save" />
-</form>
+{% endif %}
+<br/>
+<div>
+  <h2>Images</h2>
+  <p>To update images, replace the png file in the <code>ra_config</code> folder of this application.</p>
+  Company logo: <img src="data:image/jpeg;base64,{{ logoimage }}" height="100px">
+  <br/>
+  Customer logo: <img src="data:image/jpeg;base64,{{ logocustomer }}" height="100px">
+</div>
 
 {% endblock content %}
