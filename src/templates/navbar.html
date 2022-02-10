@@ -1,21 +1,19 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-    <a class="navbar-brand" href="/">F5 Pair {{session['pair']['name']}}</a>
+    <a class="navbar-brand" href="/">F5 Pair {{session['pair']['name'] if 'pair' in session else "Not Selected"}}</a>
     <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#myNavbar" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
     </button>
     <div class="navbar-collapse collapse" id="myNavbar">
         <ul class="nav navbar-nav mr-auto">
             <li class="nav-item"><a class="nav-link" href="{{url_for('home_page')}}">Home</a></li>
-            {% if vips %}
-                <li class="nav-item dropdown">
-                    <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
-                    <ul class="dropdown-menu vip-menu">
-                        {% for vip in vips %}
-                            <li><a class="dropdown-item" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a></li>
-                        {% endfor %}
-                    </ul>
+            <li class="nav-item dropdown">
+                <a href="#" class="nav-link dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
+                <ul class="dropdown-menu vip-menu">
+                    {% for vip in session['vips'] %}
+                        <li><a class="dropdown-item {{'active' if vip == selected_vip}}" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a></li>
+                    {% endfor %}
+                </ul>
                 </li>
-            {% endif %}
             <li class="nav-item"><a class="nav-link" href="{{url_for('top_n_page')}}">TopN</a></li>
             <li class="nav-item"><a class="nav-link" href="{{url_for('settings_page')}}">Settings</a></li>
         </ul>

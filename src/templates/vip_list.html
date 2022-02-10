@@ -1,7 +1,7 @@
 <div>
     <form onsubmit="return mysubmit();">
         <select name="vip" id="vip">
-        {% for vip in vips %}
+        {% for vip in session['vips'] %}
             {% if vip == selected_vip %}
                 <option value="{{vip}}" selected>{{vip}}</option>
             {% else %}

@@ -1,17 +1,18 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
-  <h1>Reporting</h1>
+  <h1>Cluster Summary</h1>
+  <a class="btn bg-primary text-light" href="{{url_for('node_pdf')|safe}}">Generate Pair PDF</a>
 </div>
 
 <div>
   <table class="table">
     <tr>
       <th>Metric</th>
-      <th>Min</th>
-      <th>Mean</th>
-      <th>Max</th>
-      <th>Total</th>
+      <th style="text-align:right">Min</th>
+      <th style="text-align:right">Mean</th>
+      <th style="text-align:right">Max</th>
+      <th style="text-align:right">Total</th>
     </tr>
     {% for metric in summary %}
       <tr>
@@ -24,5 +25,13 @@
     {% endfor %}
   </table>
 </div>
+
+<h2>VIPs</h2>
+<div class="list-group">
+  {% for vip in session['vips'] %}
+      <a class="list-group-item  list-group-item-action" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a>
+  {% endfor %}
+</div>
+
 
 {% endblock content %}

@@ -5,6 +5,16 @@
 </div>
 
 <div>
+  {% if session['pair_list'] %}
+  <div class="dropdown float-end">
+    <button class="btn btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Set current F5 pair for reporting</button>
+    <ul class="dropdown-menu vip-menu" aria-labelledby="pairselect">
+        {% for pair in pair_list %}
+            <li><a class="dropdown-item {{'active' if loop.index0 == session['new_pair']}}" href="{{url_for('clear_cache', new_pair=loop.index0)}}">{{pair}}</a></li>
+        {% endfor %}
+    </ul>
+  </div>
+{% endif %}
   <h2>Connection Settings</h2>
   {% with messages = get_flashed_messages() %}
     {% if messages %}
@@ -31,17 +41,6 @@
   <input type="submit" id="submit" value="Save" />
   </form>
 </div>
-<br/>
-{% if session['pair_list'] %}
-  <div class="dropdown">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Select F5 Pair</button>
-    <ul class="dropdown-menu vip-menu" aria-labelledby="dropdownMenuButton1">
-        {% for pair in session['pair_list'] %}
-            <li><a class="drowdown-item" href="{{url_for('clear_cache', new_pair=loop.index0)}}">{{pair}}</a></li>
-        {% endfor %}
-    </ul>
-  </div>
-{% endif %}
 <br/>
 <div>
   <h2>Images</h2>

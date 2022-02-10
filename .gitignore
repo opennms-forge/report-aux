@@ -162,10 +162,10 @@ cython_debug/
 local_test/
 *.ipynb
 
-ra_config/
-!ra_config/.readme
-src/ra_config/*.json
+src/ra_config/
+!src/ra_config/.readme
 parsed_data.json
-src/flask_session/
+src/flask_session/*
 src/temp/*
+!src/temp/.readme
 */*.pdf

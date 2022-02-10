@@ -13,13 +13,13 @@ class PDF(FPDF, HTMLMixin):
     def lines(self):
         self.rect(5.0, 5.0, 200.0,287.0)
 
-    def titles(self, text:str):
+    def titles(self, title:str):
         self.set_xy(0.0,0.0)
         self.set_font('Helvetica', 'B', 16)
         self.set_text_color(0, 0, 0)
-        self.cell(w=210.0, h=30.0, align='C', txt=text, border=0)
+        self.cell(w=210.0, h=30.0, align='C', txt=title, border=0)
 
-    def template_page(self, page_name:str):
+    def template_page(self, pair_name:str, page_name:str):
         self.add_page()
         self.start_section(page_name)
         self.set_fill_color(r=180, g=182, b=200)
@@ -30,7 +30,8 @@ class PDF(FPDF, HTMLMixin):
         self.image('ra_config/logo.png', link='', type='', h=7)
         self.set_xy(160.0,7.0)
         self.image('ra_config/logo_customer.png', link='', type='', h=7)
-        self.titles(page_name)
+        self.titles(f"""{pair_name}
+        {page_name}""")
 
     def add_image(self, image_path:str, x:int, y:int):
         self.set_xy(x, y)
@@ -58,7 +59,7 @@ class PDF(FPDF, HTMLMixin):
         self.write_html(table_html)
 
 
-def generate_pdf(title:str) -> PDF:
+def generate_pdf(pair:str='', title:str='') -> PDF:
     pdf = PDF()
-    pdf.template_page(title)
+    pdf.template_page(pair, title)
     return pdf

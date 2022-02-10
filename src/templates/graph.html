@@ -2,17 +2,17 @@
 {% block content %}
 <div>
   <h1>{{selected_vip}}</h1>
-  <a class="btn bg-primary text-light" href="{{url_for('pdf', vip=selected_vip)|safe}}">Generate PDF</a>
+  <a class="btn bg-primary text-light" href="{{url_for('vip_pdf', vip=selected_vip)|safe}}">Generate VIP PDF</a>
 </div>
 
 <div>
   <table class="table">
     <tr>
       <th>Metric</th>
-      <th>Min</th>
-      <th>Mean</th>
-      <th>Max</th>
-      <th>Total</th>
+      <th style="text-align:right">Min</th>
+      <th style="text-align:right">Mean</th>
+      <th style="text-align:right">Max</th>
+      <th style="text-align:right">Total</th>
     </tr>
     {% for metric in summary %}
       <tr>

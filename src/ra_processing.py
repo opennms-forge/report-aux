@@ -72,6 +72,9 @@ def top_n_stats(parsed_metrics:dict) -> dict:
                 else:
                     top_n[metric] = {interface: parsed_metrics[interface]['summary'][metric]}
     for metric in top_n:
+        for vip in top_n[metric]:
+            if top_n[metric][vip] == None:
+                top_n[metric][vip] = 0
         d = Counter(top_n[metric])
         sorted_top_n[metric] = {}
         for k,v in d.most_common():
@@ -184,12 +187,8 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
     return parsed_metrics
 
 
-def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, rrds:list) -> dict:
+def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[]) -> dict:
     start_time = time.time()
-    if rrds:
-        metric_labels = rrds
-    else:
-        metric_labels = ['ifInOctets', 'ifOutOctets']
     parsed_metrics = {'node[device]': {}}
 
     minute = 60000
@@ -215,9 +214,11 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, rrds:list) -> dict:
     for interface in parsed_metrics:
         if 'node[' not in interface:
             parsed_metrics[interface] = average_lists(parsed_metrics[interface])
+            parsed_metrics[interface]['stats'] = summary_stats(parsed_metrics, interface, metric_labels)
 
     parsed_metrics['node[top_n]'] = top_n_stats(parsed_metrics)
     parsed_metrics['node[device]'] = device_stats(parsed_metrics)
+    parsed_metrics['node[device]']['stats'] = summary_stats(parsed_metrics, 'node[device]', metric_labels)
 
     end_time = time.time()
     print(f'Time to process {loop_count} interfaces: {end_time - start_time}')
@@ -239,3 +240,28 @@ def filter_interfaces(interface_list:dict) -> list:
         interfaces = []
 
     return interfaces, metrics
+
+
+def summary_stats(parsed_metrics:dict, interface:str, metrics:list) -> dict:
+    summary = {}
+    raw = {}
+
+    if interface == 'node[device]':
+        raw = parsed_metrics[interface]
+        for metric in metrics:
+            raw[metric] = [item for item in raw[metric] if item is not None]
+    else:
+        for metric in metrics:
+            raw[metric] = []
+            for ts in parsed_metrics[interface]['ts']:
+                raw[metric].append(parsed_metrics[interface]['ts'][ts].get(metric))
+            raw[metric] = [item for item in raw[metric] if item is not None]
+
+    for metric in metrics:
+        summary[metric] = {}
+        summary[metric]['Min'] = np.min(raw[metric])
+        summary[metric]['Max'] = np.max(raw[metric])
+        summary[metric]['Average'] = np.mean(raw[metric])
+        summary[metric]['Total'] = np.sum(raw[metric])
+
+    return summary
