@@ -33,6 +33,11 @@ def clear_temp(session:bool=False):
     for file in temp_files:
         if '.readme' not in file.name:
             os.remove(file.path)
+    pdf_files = os.scandir('static/pdf')
+    for file in pdf_files:
+        if '.readme' not in file.name:
+            os.remove(file.path)
+
 
 clear_temp(session=False)
 
@@ -86,8 +91,9 @@ def page_not_found(e):
 
 
 @web.template_filter()
-def numberFormat(value):
-    return "{:,.2f}".format(int(value))
+def numberFormat(value:float, round:int=2) -> str:
+    num_format = "{:,." + str(round) + "f}"
+    return num_format.format(float(value))
 
 @web.context_processor
 def global_vars():

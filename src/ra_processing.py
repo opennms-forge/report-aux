@@ -63,6 +63,7 @@ def average_lists(parsed_metrics:dict) -> dict:
 
 def top_n_stats(parsed_metrics:dict) -> dict:
     top_n = {}
+    trimmed_n = {}
     sorted_top_n = {}
     for interface in parsed_metrics:
         if 'node[' not in interface:
@@ -72,10 +73,11 @@ def top_n_stats(parsed_metrics:dict) -> dict:
                 else:
                     top_n[metric] = {interface: parsed_metrics[interface]['summary'][metric]}
     for metric in top_n:
+        trimmed_n[metric] = {}
         for vip in top_n[metric]:
-            if top_n[metric][vip] == None:
-                top_n[metric][vip] = 0
-        d = Counter(top_n[metric])
+            if round(top_n[metric][vip] or 0,2) not in [None, 0]:
+                trimmed_n[metric][vip] = top_n[metric][vip]
+        d = Counter(trimmed_n[metric])
         sorted_top_n[metric] = {}
         for k,v in d.most_common():
             sorted_top_n[metric][k] = v
@@ -222,6 +224,8 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     parsed_metrics['node[device]']['stats'] = summary_stats(parsed_metrics, 'node[device]', metric_labels)
 
     end_time = time.time()
+    parsed_metrics['node[data]']['elapsed'] = end_time - start_time
+    parsed_metrics['node[data]']['count'] = loop_count
     print(f'Time to process {loop_count} interfaces: {end_time - start_time}')
     return parsed_metrics
 
@@ -260,9 +264,9 @@ def summary_stats(parsed_metrics:dict, interface:str, metrics:list) -> dict:
 
     for metric in metrics:
         summary[metric] = {}
-        summary[metric]['Min'] = np.min(raw[metric])
-        summary[metric]['Max'] = np.max(raw[metric])
-        summary[metric]['Average'] = np.mean(raw[metric])
-        summary[metric]['Total'] = np.sum(raw[metric])
+        summary[metric]['Min'] = np.min(raw[metric] or [0])
+        summary[metric]['Max'] = np.max(raw[metric] or [0])
+        summary[metric]['Average'] = np.mean(raw[metric] or [0])
+        summary[metric]['Total'] = np.sum(raw[metric] or [0])
 
     return summary

@@ -1,12 +1,19 @@
 # export.py
 
+from requests.auth import HTTPBasicAuth
 from fpdf import FPDF, HTMLMixin
 from datetime import datetime
 import trending
 import plotly
+import json
+import ra_processing
+import time
 
-def numberFormat(value):
-    return "{:,.2f}".format(int(value))
+
+def numberFormat(value:float, round:int=2) -> str:
+    num_format = "{:,." + str(round) + "f}"
+    return num_format.format(float(value))
+
 
 class PDF(FPDF, HTMLMixin):
     def __init__(self) -> None:
@@ -75,15 +82,17 @@ class PDF(FPDF, HTMLMixin):
         self.set_font("Helvetica", size=10)
         table_html = f'<table width="75%">'
         for metric in top_n:
-            table_html += f'<tr>'
-            table_html += f'<th width="50%">VIP</th>'
-            table_html += f'<th width="50%">{metric}</th>'
-            table_html += f'</tr>'
-            for site in top_n[metric]:
+            if top_n[metric]:
                 table_html += f'<tr>'
-                table_html += f'<td>{site}</td>'
-                table_html += f'<td align="right"><font face="Courier">{numberFormat(top_n[metric][site])}</font></td>'
+                table_html += f'<th width="50%">VIP</th>'
+                table_html += f'<th width="50%">{metric}</th>'
                 table_html += f'</tr>'
+                for site in top_n[metric]:
+                    table_html += f'<tr>'
+                    table_html += f'<td>{site}</td>'
+                    table_html += f'<td align="right"><font face="Courier">{numberFormat(top_n[metric][site])}</font></td>'
+                    table_html += f'</tr>'
+                table_html += f'<tr><td> </td><td> </td></tr>'
         table_html += f'</table>'
         self.write_html(table_html)
 
@@ -91,6 +100,25 @@ def generate_pdf(pair:str='', title:str='', date_stamp:datetime=datetime.now()) 
     pdf = PDF()
     pdf.created = date_stamp
     pdf.template_page(pair, title)
+    return pdf
+
+def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list) -> PDF:
+    interface = '/Common/' + vip
+    weekends = trending.find_weekends(parsed_metrics, interface)
+    trend_time = trending.time_trend(parsed_metrics, interface, metrics)
+    trend_line = trending.time_lines(parsed_metrics, interface, metrics)
+
+    fig1 = trending.get_trend_graph(trend_time)
+    fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
+
+    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
+    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
+
+    pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'])
+    pdf.interface_summary(parsed_metrics[interface]['stats'], 10, 30)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
+
     return pdf
 
 def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list) -> PDF:
@@ -116,21 +144,35 @@ def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list)
 
     return pdf
 
-def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list) -> PDF:
-    interface = '/Common/' + vip
-    weekends = trending.find_weekends(parsed_metrics, interface)
-    trend_time = trending.time_trend(parsed_metrics, interface, metrics)
-    trend_line = trending.time_lines(parsed_metrics, interface, metrics)
+def render_all_nodes_pdf():
+    start_time = time.time()
+    f = open('ra_config/config.json')
+    config = json.load(f)
+    f.close()
+    RA_url = config['url']
+    RAauth = HTTPBasicAuth(config['username'], config['password'])
+    loop_count = 0
+    vip_count = 0
+    for pair in config['nodes']:
+        interfaces = []
+        metrics = []
+        name = []
+        loop_count += 1
 
-    fig1 = trending.get_trend_graph(trend_time)
-    fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
+        for node in pair:
+            interface_list = ra_processing.get_interfaces(RA_url, RAauth, node)
+            name.append(interface_list['label'].split(' ')[1][1:-1])
+            interfaces_a, metrics_a = ra_processing.filter_interfaces(interface_list)
+            [interfaces.append(interface) for interface in interfaces_a if interface not in interfaces]
+            [metrics.append(metric) for metric in metrics_a if metric not in metrics]
 
-    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
-
-    pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'])
-    pdf.interface_summary(parsed_metrics[interface]['stats'], 10, 30)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
-
-    return pdf
+        pair_name = ":".join(name)
+        parsed_metrics = ra_processing.main(RA_url, RAauth, interfaces, metrics)
+        vip_count += parsed_metrics['node[data]']['count']
+        byte_metrics = trending.byte_metrics(metrics)
+        vips = [vip.replace('/Common/', '') for vip in parsed_metrics if '/Common/' in vip]
+        if vips:
+            pdf = render_node_pdf(pair_name=pair_name, vips=vips, parsed_metrics=parsed_metrics, metrics=byte_metrics)
+        pdf.output(f"static/pdf/{pair_name.replace(':','_')}.pdf", 'F')
+    end_time = time.time()
+    print(f'Time to process {loop_count} pairs with {vip_count} VIPs: {end_time - start_time}')
