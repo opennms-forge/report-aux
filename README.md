@@ -1,4 +1,4 @@
-<img src="https://img.shields.io/badge/Python-3.6.8-blue"/>
+<img src="https://img.shields.io/badge/Python-3.7.4-blue"/>
 
 # Reporting-auxiliary
 

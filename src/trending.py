@@ -20,31 +20,35 @@ def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
                 for metric in label:
                     if 'out' in metric.lower():
                         if metric in parsed_metrics[interface]['day_of_week'][j][k]:
+                            trend['x'].append(Day(j).name)
+                            if k == 'total':
+                                trend['y'].append(f'average')
+                            else:
+                                trend['y'].append(f'{k}:00')
                             if parsed_metrics[interface]['day_of_week'][j][k][metric] != None:
-                                trend['x'].append(Day(j).name)
-                                if k == 'total':
-                                    trend['y'].append(f'average')
-                                else:
-                                    trend['y'].append(f'{k}:00')
-                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] * 8)
-                                trend['c'].append('Bytes Out')
+                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] or 0 * 8)
+                            else:
+                                trend['z'].append(0)
+                            trend['c'].append('Bytes Out')
                     elif 'in' in metric.lower():
                         if metric in parsed_metrics[interface]['day_of_week'][j][k]:
+                            trend['x'].append(Day(j).name)
+                            if k == 'total':
+                                trend['y'].append(f'average')
+                            else:
+                                trend['y'].append(f'{k}:00')
                             if parsed_metrics[interface]['day_of_week'][j][k][metric] != None:
-                                trend['x'].append(Day(j).name)
-                                if k == 'total':
-                                    trend['y'].append(f'average')
-                                else:
-                                    trend['y'].append(f'{k}:00')
-                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] * 8)
-                                trend['c'].append('Bytes In')
+                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] or 0 * 8)
+                            else:
+                                trend['z'].append(0)
+                            trend['c'].append('Bytes In')
     for k in parsed_metrics[interface]['hour_of_day']:
         trend['hour'][k] = {'Bytes Out': [], 'Bytes In': []}
         for metric in label:
             if 'out' in metric.lower():
-                trend['hour'][k]['Bytes Out'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric, 0) * 8)
+                trend['hour'][k]['Bytes Out'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric) or 0 * 8)
             elif 'in' in metric.lower():
-                trend['hour'][k]['Bytes In'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric, 0) * 8)
+                trend['hour'][k]['Bytes In'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric) or 0 * 8)
     for k in parsed_metrics[interface]['hour_of_day']:
         trend['hour'][k] = average_metrics(trend['hour'][k])
     for k in trend['hour']:
