@@ -7,10 +7,10 @@
 <div>
   {% if session['pair_list'] %}
   <div class="dropdown float-end">
-    <button class="btn btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Set current F5 pair for reporting</button>
+    <button class="btn btn-secondary my-btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Set current F5 pair for reporting</button>
     <ul class="dropdown-menu vip-menu" aria-labelledby="pairselect">
         {% for pair in pair_list %}
-            <li><a class="dropdown-item {{'active' if loop.index0 == session['new_pair']}}" href="{{url_for('clear_cache', new_pair=loop.index0)}}">{{pair}}</a></li>
+            <li><a class="dropdown-item {{'active my-active' if loop.index0 == session['new_pair']}}" href="{{url_for('clear_cache', new_pair=loop.index0)}}">{{pair}}</a></li>
         {% endfor %}
     </ul>
   </div>

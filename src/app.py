@@ -7,8 +7,6 @@ from os.path import exists
 
 import json
 import plotly
-import plotly.express as px
-import plotly.graph_objects as go
 import uuid
 import base64
 import os
@@ -188,8 +186,8 @@ def vip_page(vip:str=None):
         trend_time = trending.time_trend(session['parsed_metrics'], interface, metric_list)
         trend_line = trending.time_lines(session['parsed_metrics'], interface, metric_list)
 
-        fig1 = get_trend_graph(trend_time)
-        fig2 = get_trend_line(trend_line[0], trend_line[1], weekends)
+        fig1 = trending.get_trend_graph(trend_time)
+        fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
 
         fig1_json = json.dumps(fig1, cls=plotly.utils.PlotlyJSONEncoder)
         fig2_json = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
@@ -197,24 +195,6 @@ def vip_page(vip:str=None):
     else:
         return render_template('graph.html')
 
-
-def get_trend_graph(trend:dict) -> px.scatter:
-    fig = px.scatter(x=trend['x'], y=trend['y'], size=trend['z'], color=trend['c'], labels={'x': 'Day of Week', 'y': 'Time', 'size': 'Bytes', 'color': 'Metric'})
-    fig.add_shape(y0="8:00", y1="8:00", x0=-.5, x1=7.5, type="line", line_color="black", line_width=1)
-    fig.add_shape(y0="17:00", y1="17:00", x0=-.5, x1=7.5, type="line", line_color="black", line_width=1)
-    fig.add_vrect(x0=4.5, x1=6.5, fillcolor="LightSalmon", opacity=0.5, layer="below", line_width=0)
-    return fig
-
-def get_trend_line(stats:dict, stats2:dict, weekends:dict) -> go.Figure:
-    fig2 = go.Figure()
-    fig2.add_trace(go.Scatter(x=stats['x'], y=stats['y'], mode="lines", name="BytesOut"))
-    fig2.add_trace(go.Scatter(x=stats2['x'], y=stats2['y'], mode="lines", name="BytesIn"))
-    #fig2.add_shape(y0="8:00", y1="8:00", x0=-.5, x1=6.5, type="line", line_color="black", line_width=1)
-    #fig2.add_shape(y0="17:00", y1="17:00", x0=-.5, x1=6.5, type="line", line_color="black", line_width=1)
-    for weekend in weekends:
-        fig2.add_vrect(x0=weekend[0], x1=weekend[1], fillcolor="LightSalmon", opacity=0.5, layer="below", line_width=0)
-    #fig.add_vrect(x0=4.5, x1=6.5, fillcolor="LightSalmon", opacity=0.5, layer="below", line_width=0)
-    return fig2
 
 @web.route('/node_pdf')
 def node_pdf():
@@ -229,8 +209,8 @@ def node_pdf():
         trend_time = trending.time_trend(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
         trend_line = trending.time_lines(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
 
-        fig1 = get_trend_graph(trend_time)
-        fig2 = get_trend_line(trend_line[0], trend_line[1], weekends)
+        fig1 = trending.get_trend_graph(trend_time)
+        fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
 
         pdf.template_page(session['pair']['name'], vip)
         pdf.interface_summary(session['parsed_metrics'][interface]['stats'], 10, 30)
@@ -260,8 +240,8 @@ def vip_pdf(vip:str=None):
         trend_time = trending.time_trend(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
         trend_line = trending.time_lines(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
 
-        fig1 = get_trend_graph(trend_time)
-        fig2 = get_trend_line(trend_line[0], trend_line[1], weekends)
+        fig1 = trending.get_trend_graph(trend_time)
+        fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
 
         plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
         plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)

@@ -4,7 +4,10 @@ from datetime import datetime
 from models import Day
 from ra_processing import average_metrics
 
-def time_trend(parsed_metrics:dict, interface:str, label:list[str]=['ifOutOctets','ifInOctets']) -> dict:
+import plotly.express as px
+import plotly.graph_objects as go
+
+def time_trend(parsed_metrics:dict, interface:str, label:list=['ifOutOctets','ifInOctets']) -> dict:
     trend = {'x': [], 'y': [], 'z': [], 'c': [], 'hour':{}}
     for j in parsed_metrics[interface]['day_of_week']:
         if j != 'total':
@@ -75,7 +78,7 @@ def find_weekends(parsed_metrics:dict, interface:str) -> list:
     return weekends
 
 
-def time_lines(parsed_metrics:dict, interface:str, label:list[str]=['ifOutOctets','ifInOctets']) -> dict:
+def time_lines(parsed_metrics:dict, interface:str, label:list=['ifOutOctets','ifInOctets']) -> dict:
     stats = {'x': [], 'y': []}
     stats2 = {'x': [], 'y': []}
     for i in parsed_metrics:
@@ -98,3 +101,18 @@ def time_lines(parsed_metrics:dict, interface:str, label:list[str]=['ifOutOctets
         if len(stats['x']) >= 100:
             break
     return stats, stats2
+
+def get_trend_graph(trend:dict) -> px.scatter:
+    fig = px.scatter(x=trend['x'], y=trend['y'], size=trend['z'], color=trend['c'], labels={'x': 'Day of Week', 'y': 'Time', 'size': 'Bytes', 'color': 'Metric'})
+    fig.add_shape(y0="8:00", y1="8:00", x0=-.5, x1=7.5, type="line", line_color="black", line_width=1)
+    fig.add_shape(y0="18:00", y1="18:00", x0=-.5, x1=7.5, type="line", line_color="black", line_width=1)
+    fig.add_vrect(x0=4.5, x1=6.5, fillcolor="rgba(255,85,94,1)", opacity=0.25, layer="below", line_width=0)
+    return fig
+
+def get_trend_line(stats:dict, stats2:dict, weekends:dict) -> go.Figure:
+    fig2 = go.Figure()
+    fig2.add_trace(go.Scatter(x=stats['x'], y=stats['y'], mode="lines", name="BytesOut", line={'color':"rgba(165, 50, 94,1)"}))
+    fig2.add_trace(go.Scatter(x=stats2['x'], y=stats2['y'], mode="lines", name="BytesIn", line={'color':"rgba(20, 209, 223,1)"}))
+    for weekend in weekends:
+        fig2.add_vrect(x0=weekend[0], x1=weekend[1], fillcolor="rgba(126,129,157,1)", opacity=0.25, layer="below", line_width=0)
+    return fig2

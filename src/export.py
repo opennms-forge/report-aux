@@ -50,7 +50,7 @@ class PDF(FPDF, HTMLMixin):
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         table_html = """
-            <table class="table" width="100%">
+            <table class="table" width="75%">
                     <tr>
                     <th width="20%">Metric</th>
                     <th width="20%">Min</th>
@@ -70,7 +70,7 @@ class PDF(FPDF, HTMLMixin):
     def top_n_summary(self, top_n:dict, x:int, y:int):
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
-        table_html = f'<table width="50%">'
+        table_html = f'<table width="75%">'
         for metric in top_n:
             table_html += f'<tr>'
             table_html += f'<th width="50%">VIP</th>'

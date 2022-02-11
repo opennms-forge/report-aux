@@ -4,7 +4,7 @@
 .MarineBlue { color: rgb(0, 129, 173) }
 .AuroraPurple { color: rgb(114, 137, 255) }
 .DawnMaroon { color: rgb(165, 50, 94) }
-.TwighlightRed { color: rgb(255, 85, 94) }
+.TwilightRed { color: rgb(255, 85, 94) }
 .SunriseYellow { color: rgb(255, 175, 34) }
 .ChromaticBlack { color: rgb(10, 12, 27) }
 .DarkBlue { color: rgb(19, 23, 54) }
@@ -12,3 +12,24 @@
 .CoolGray3 { color: rgb(126, 129, 152) }
 .CoolGray2 { color: rgb(180, 182, 200) }
 .CoolGray1 { color: rgb(233, 235, 249) }
+
+.my-bg-primary{
+    background-color: rgb(0, 129, 173)!important;
+}
+.my-btn-secondary{
+    background-color: rgb(73, 76, 103);
+}
+
+.my-btn-primary{
+    background-color: rgb(0, 129, 173);
+}
+
+.my-active{
+    background-color: rgb(0, 129, 173)!important;
+}
+
+
+.vip-menu{
+    height:400px;
+    overflow-y:auto;
+}
