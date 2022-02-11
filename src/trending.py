@@ -8,6 +8,10 @@ from ra_processing import average_metrics
 import plotly.express as px
 import plotly.graph_objects as go
 
+def byte_metrics(metrics:list) -> list:
+    metrics = [metric for metric in metrics if 'Bytes' in metric]
+    return list(set(metrics))
+
 def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
     trend = {'x': [], 'y': [], 'z': [], 'c': [], 'hour':{}}
     for j in parsed_metrics[interface]['day_of_week']:

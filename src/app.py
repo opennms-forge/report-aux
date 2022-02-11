@@ -97,11 +97,6 @@ def global_vars():
     }
     return vars
 
-def byte_metrics(metrics:list) -> list:
-    metrics = [metric for metric in metrics if 'Bytes' in metric]
-    metrics.reverse()
-    return metrics
-
 
 def get_data(redirect:redirect) -> dict:
     RA_url = web.my_config['url']
@@ -182,7 +177,7 @@ def vip_page(vip:str=None):
     if vip in session['vips']:
         interface = '/Common/' + vip
         weekends = trending.find_weekends(session['parsed_metrics'], interface)
-        metric_list = byte_metrics(session['metrics'])
+        metric_list = trending.byte_metrics(session['metrics'])
         trend_time = trending.time_trend(session['parsed_metrics'], interface, metric_list)
         trend_line = trending.time_lines(session['parsed_metrics'], interface, metric_list)
 
@@ -200,27 +195,7 @@ def vip_page(vip:str=None):
 def node_pdf():
     if 'parsed_metrics' not in session:
         return redirect(url_for('home_page'))
-    pdf = export.generate_pdf(session['pair']['name'], 'Summary')
-    pdf.interface_summary(session['parsed_metrics']['node[device]']['stats'], 10, 30)
-    pdf.top_n_summary(session['parsed_metrics']['node[top_n]'], 10, 70)
-    for vip in session['vips']:
-        interface = '/Common/' + vip
-        weekends = trending.find_weekends(session['parsed_metrics'], interface)
-        trend_time = trending.time_trend(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
-        trend_line = trending.time_lines(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
-
-        fig1 = trending.get_trend_graph(trend_time)
-        fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
-
-        pdf.template_page(session['pair']['name'], vip)
-        pdf.interface_summary(session['parsed_metrics'][interface]['stats'], 10, 30)
-
-        plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
-        plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
-        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
-
-
+    pdf = export.render_node_pdf(pair_name=session['pair']['name'], vips=session['vips'], parsed_metrics=session['parsed_metrics'], metrics=trending.byte_metrics(session['metrics']))
     response = make_response(pdf.output())
     response.headers.set('Content-Disposition', 'attachment', filename=session['pair']['name'].replace(':','_') + '.pdf')
     response.headers.set('Content-Type', 'application/pdf')
@@ -235,22 +210,7 @@ def vip_pdf(vip:str=None):
     if not vip:
         vip = session['vips'][0]
     if vip in session['vips']:
-        interface = '/Common/' + vip
-        weekends = trending.find_weekends(session['parsed_metrics'], interface)
-        trend_time = trending.time_trend(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
-        trend_line = trending.time_lines(session['parsed_metrics'], interface, byte_metrics(session['metrics']))
-
-        fig1 = trending.get_trend_graph(trend_time)
-        fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
-
-        plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-        plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
-
-        pdf = export.generate_pdf(session['pair']['name'], vip)
-        pdf.interface_summary(session['parsed_metrics'][interface]['stats'], 10, 30)
-        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
-        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
-
+        pdf = export.render_vip_pdf(pair_name=session['pair']['name'], vip=vip, parsed_metrics=session['parsed_metrics'], metrics=trending.byte_metrics(session['metrics']))
         response = make_response(pdf.output())
         response.headers.set('Content-Disposition', 'attachment', filename=vip + '.pdf')
         response.headers.set('Content-Type', 'application/pdf')

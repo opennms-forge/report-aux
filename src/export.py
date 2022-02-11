@@ -1,10 +1,11 @@
 # export.py
 
 from fpdf import FPDF, HTMLMixin
+import trending
+import plotly
 
 def numberFormat(value):
     return "{:,.2f}".format(int(value))
-
 
 class PDF(FPDF, HTMLMixin):
     def __init__(self) -> None:
@@ -87,4 +88,46 @@ class PDF(FPDF, HTMLMixin):
 def generate_pdf(pair:str='', title:str='') -> PDF:
     pdf = PDF()
     pdf.template_page(pair, title)
+    return pdf
+
+def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list) -> PDF:
+    pdf = generate_pdf(pair_name, 'Summary')
+    pdf.interface_summary(parsed_metrics['node[device]']['stats'], 10, 30)
+    pdf.top_n_summary(parsed_metrics['node[top_n]'], 10, 70)
+    for vip in vips:
+        interface = '/Common/' + vip
+        weekends = trending.find_weekends(parsed_metrics, interface)
+        trend_time = trending.time_trend(parsed_metrics, interface, metrics)
+        trend_line = trending.time_lines(parsed_metrics, interface, metrics)
+
+        fig1 = trending.get_trend_graph(trend_time)
+        fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
+
+        pdf.template_page(pair_name, vip)
+        pdf.interface_summary(parsed_metrics[interface]['stats'], 10, 30)
+
+        plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
+        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
+        plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
+        pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
+
+    return pdf
+
+def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list) -> PDF:
+    interface = '/Common/' + vip
+    weekends = trending.find_weekends(parsed_metrics, interface)
+    trend_time = trending.time_trend(parsed_metrics, interface, metrics)
+    trend_line = trending.time_lines(parsed_metrics, interface, metrics)
+
+    fig1 = trending.get_trend_graph(trend_time)
+    fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
+
+    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
+    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
+
+    pdf = generate_pdf(pair_name, vip)
+    pdf.interface_summary(parsed_metrics[interface]['stats'], 10, 30)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
+
     return pdf
