@@ -1,6 +1,7 @@
 # export.py
 
 from fpdf import FPDF, HTMLMixin
+from datetime import datetime
 import trending
 import plotly
 
@@ -29,6 +30,7 @@ class PDF(FPDF, HTMLMixin):
         # Add a page number
         page = 'Page ' + str(self.page_no()) + '/{nb}'
         self.cell(0, 10, page, 0, 0, 'C')
+        self.cell(0, 10, align='R', txt=self.created.strftime("%m/%d/%Y, %H:%M:%S"), border=0)
 
     def template_page(self, pair_name:str, page_name:str):
         self.add_page()
@@ -85,13 +87,14 @@ class PDF(FPDF, HTMLMixin):
         table_html += f'</table>'
         self.write_html(table_html)
 
-def generate_pdf(pair:str='', title:str='') -> PDF:
+def generate_pdf(pair:str='', title:str='', date_stamp:datetime=datetime.now()) -> PDF:
     pdf = PDF()
+    pdf.created = date_stamp
     pdf.template_page(pair, title)
     return pdf
 
 def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list) -> PDF:
-    pdf = generate_pdf(pair_name, 'Summary')
+    pdf = generate_pdf(pair_name, 'Summary', parsed_metrics['node[data]']['generated'])
     pdf.interface_summary(parsed_metrics['node[device]']['stats'], 10, 30)
     pdf.top_n_summary(parsed_metrics['node[top_n]'], 10, 70)
     for vip in vips:
@@ -125,7 +128,7 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list) ->
     plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
     plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
 
-    pdf = generate_pdf(pair_name, vip)
+    pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'])
     pdf.interface_summary(parsed_metrics[interface]['stats'], 10, 30)
     pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
     pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)

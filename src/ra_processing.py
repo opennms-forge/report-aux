@@ -190,6 +190,7 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
 def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[]) -> dict:
     start_time = time.time()
     parsed_metrics = {'node[device]': {}}
+    parsed_metrics['node[data]'] = {'generated':datetime.now()}
 
     minute = 60000
     hour = minute * 60
