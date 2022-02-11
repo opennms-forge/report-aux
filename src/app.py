@@ -252,3 +252,6 @@ def settings_page():
     for pair in session['pair_list']:
         pair_list.append(":".join(pair))
     return render_template('settings.html', config=config, logoimage=logoimage, logocustomer=logocustomer, pair_list=pair_list)
+
+if __name__ == "__main__":
+    web.run()

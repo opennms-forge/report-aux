@@ -1,0 +1,21 @@
+[Unit]
+Description=OpenNMS Report Auxiliary
+Documentation=https://github.com/opennms-forge/report-aux
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+
+User=root
+Group=root
+WorkingDirectory=/opt/report-aux/src
+
+ExecStart=/opt/report-aux/venv/bin/gunicorn --config /opt/report-aux/gunicorn.py app:web
+
+Restart=on-failure
+RestartSec=30
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
