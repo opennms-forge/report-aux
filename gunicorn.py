@@ -1,4 +1,4 @@
-bind = '0.0.0.0:6000'
+bind = '0.0.0.0:5000'
 workers = 5
 threads = 3
 timeout = 120
