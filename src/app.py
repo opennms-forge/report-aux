@@ -167,8 +167,17 @@ def home_page():
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
         get_data(url_for('vip_page'))
+    weekends = trending.find_weekends(session['parsed_metrics'], 'node[device]')
+    metric_list = trending.byte_metrics(session['metrics'])
+    trend_time = trending.time_trend(session['parsed_metrics'], 'node[device]', metric_list)
+    trend_line = trending.time_lines(session['parsed_metrics'], 'node[device]', metric_list)
 
-    return render_template('home.html', summary=session['parsed_metrics']['node[device]']['stats'])
+    fig1 = trending.get_trend_graph(trend_time)
+    fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
+
+    fig1_json = json.dumps(fig1, cls=plotly.utils.PlotlyJSONEncoder)
+    fig2_json = json.dumps(fig2, cls=plotly.utils.PlotlyJSONEncoder)
+    return render_template('home.html', fig1_json=fig1_json, fig2_json=fig2_json, summary=session['parsed_metrics']['node[device]']['stats'])
 
 @web.route('/vip')
 def vip_page(vip:str=None):

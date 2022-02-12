@@ -56,8 +56,7 @@ def average_lists(parsed_metrics:dict) -> dict:
         for day in range(0,7):
             parsed_metrics['day_of_week'][day][hour] = average_metrics(parsed_metrics['day_of_week'][day][hour])
             parsed_metrics['day_of_week'][day]['total'] = average_metrics(parsed_metrics['day_of_week'][day]['total'])
-    for metric in parsed_metrics['summary']:
-        parsed_metrics['summary'] = average_metrics(parsed_metrics['summary'])
+    parsed_metrics['summary'] = average_metrics(parsed_metrics['summary'])
     return parsed_metrics
 
 
@@ -93,6 +92,8 @@ def device_stats(parsed_metrics:dict) -> dict:
                     device[metric].append(parsed_metrics[interface]['summary'][metric])
                 else:
                     device[metric] = [parsed_metrics[interface]['summary'][metric]]
+    for key in parsed_metrics['node[device]']:
+        device[key] = parsed_metrics['node[device]'][key]
     return device
 
 
@@ -138,12 +139,9 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
             if column == 'NaN':
                 column = None
 
-            label = metric_data['metadata']['resources'][z]['label']
-            parsed_metrics[interface]['label'] = label
+            data_point = metric_data['metadata']['resources'][z]['label']
+            parsed_metrics[interface]['label'] = data_point
             metric = metric_data['labels'][z]
-
-            if not parsed_metrics.get(label):
-                parsed_metrics[label] = blank_histogram()
 
             if parsed_metrics[interface]['ts'].get(ts):
                 parsed_metrics[interface]['ts'][ts][metric] = column
@@ -152,37 +150,37 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
             else:
                 parsed_metrics[interface]['ts'][ts] = {metric: column, 'timestamp': ts, 'day': day}
 
-            if parsed_metrics[label]['ts'].get(ts):
-                if parsed_metrics[label]['ts'][ts].get(metric):
-                    parsed_metrics[label]['ts'][ts][metric].append(parsed_metrics[interface]['ts'][ts][metric])
-                else:
-                    parsed_metrics[label]['ts'][ts][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
-                if parsed_metrics['node[device]'].get(metric):
-                    parsed_metrics['node[device]'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
-                else:
-                    parsed_metrics['node[device]'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
-            else:
-                parsed_metrics[label]['ts'][ts] = {metric: [parsed_metrics[interface]['ts'][ts][metric]]}
+            for label in [data_point, 'node[device]']:
+                if not parsed_metrics.get(label):
+                    parsed_metrics[label] = blank_histogram()
 
-            if parsed_metrics[label]['day_of_week'][day]['total'].get(metric):
-                parsed_metrics[label]['day_of_week'][day]['total'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
-            else:
-                parsed_metrics[label]['day_of_week'][day]['total'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
-
-            if parsed_metrics[label]['hour_of_day'][hour].get(metric):
-                parsed_metrics[label]['hour_of_day'][hour][metric].append(parsed_metrics[interface]['ts'][ts][metric])
-                if parsed_metrics[label]['day_of_week'][day][hour].get(metric):
-                    parsed_metrics[label]['day_of_week'][day][hour][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+                if parsed_metrics[label]['ts'].get(ts):
+                    if parsed_metrics[label]['ts'][ts].get(metric):
+                        parsed_metrics[label]['ts'][ts][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+                    else:
+                        parsed_metrics[label]['ts'][ts][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
                 else:
+                    parsed_metrics[label]['ts'][ts] = {metric: [parsed_metrics[interface]['ts'][ts][metric]]}
+
+                if parsed_metrics[label]['day_of_week'][day]['total'].get(metric):
+                    parsed_metrics[label]['day_of_week'][day]['total'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+                else:
+                    parsed_metrics[label]['day_of_week'][day]['total'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
+
+                if parsed_metrics[label]['hour_of_day'][hour].get(metric):
+                    parsed_metrics[label]['hour_of_day'][hour][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+                    if parsed_metrics[label]['day_of_week'][day][hour].get(metric):
+                        parsed_metrics[label]['day_of_week'][day][hour][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+                    else:
+                        parsed_metrics[label]['day_of_week'][day][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
+                else:
+                    parsed_metrics[label]['hour_of_day'][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
                     parsed_metrics[label]['day_of_week'][day][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
-            else:
-                parsed_metrics[label]['hour_of_day'][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
-                parsed_metrics[label]['day_of_week'][day][hour][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
 
-            if parsed_metrics[label]['summary'].get(metric):
-                parsed_metrics[label]['summary'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
-            else:
-                parsed_metrics[label]['summary'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
+                if parsed_metrics[label]['summary'].get(metric):
+                    parsed_metrics[label]['summary'][metric].append(parsed_metrics[interface]['ts'][ts][metric])
+                else:
+                    parsed_metrics[label]['summary'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
 
     parsed_metrics[label]['ts'] = dict(collections.OrderedDict(sorted(parsed_metrics[label]['ts'].items())))
 
@@ -204,8 +202,8 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
 
     for interface in interfaces:
         loop_count += 1
-        if loop_count > 1099:
-            break
+        #if loop_count > 10:
+        #    break
         parsed_metrics[interface] = {'ts':{}}
 
         metric_url = f'{base_url}measurements'
@@ -221,6 +219,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
 
     parsed_metrics['node[top_n]'] = top_n_stats(parsed_metrics)
     parsed_metrics['node[device]'] = device_stats(parsed_metrics)
+    parsed_metrics['node[device]'] = average_lists(parsed_metrics['node[device]'])
     parsed_metrics['node[device]']['stats'] = summary_stats(parsed_metrics, 'node[device]', metric_labels)
 
     end_time = time.time()

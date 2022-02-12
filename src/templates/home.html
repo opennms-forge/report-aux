@@ -26,6 +26,10 @@
   </table>
 </div>
 
+<div id='chart' class='chart'”></div>
+<hr/>
+<div id='chart2' class='chart'”></div>
+
 <h2>VIPs</h2>
 <div class="list-group">
   {% for vip in session['vips'] %}
@@ -33,5 +37,11 @@
   {% endfor %}
 </div>
 
-
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{fig1_json | safe}};
+  Plotly.plot('chart',graphs,{});
+  var graphs2 = {{fig2_json | safe}};
+  Plotly.plot('chart2',graphs2,{});
+</script>
 {% endblock content %}
