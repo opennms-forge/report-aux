@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div>
+  <h1>All report nodes</h1>
+</div>
+<div>
+
+<ul>
+  {% for file in zip %}
+    <li><a href="{{url_for('static', filename=file.name)}}" target="_blank">{{file.name}}</a></li>
+  {% endfor %}
+</ul>
+
+
+<ul>
+{% for file in files %}
+  <li><a href="{{url_for('static', filename='pdf/'+file.name)}}" target="_blank">{{file.name}}</a></li>
+{% endfor %}
+</ul>
+{% endblock content %}

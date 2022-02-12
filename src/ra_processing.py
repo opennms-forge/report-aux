@@ -49,14 +49,17 @@ def average_metrics(metrics:dict) -> dict:
     return metrics
 
 def average_lists(parsed_metrics:dict) -> dict:
-    for ts in parsed_metrics['ts']:
-        parsed_metrics['ts'][ts] = average_metrics(parsed_metrics['ts'][ts])
-    for hour in range(0,24):
-        parsed_metrics['hour_of_day'][hour] = average_metrics(parsed_metrics['hour_of_day'][hour])
-        for day in range(0,7):
-            parsed_metrics['day_of_week'][day][hour] = average_metrics(parsed_metrics['day_of_week'][day][hour])
-            parsed_metrics['day_of_week'][day]['total'] = average_metrics(parsed_metrics['day_of_week'][day]['total'])
-    parsed_metrics['summary'] = average_metrics(parsed_metrics['summary'])
+    if parsed_metrics.get('ts'):
+        for ts in parsed_metrics['ts']:
+            parsed_metrics['ts'][ts] = average_metrics(parsed_metrics['ts'][ts])
+    if parsed_metrics.get('hour_of_day'):
+        for hour in range(0,24):
+            parsed_metrics['hour_of_day'][hour] = average_metrics(parsed_metrics['hour_of_day'][hour])
+            for day in range(0,7):
+                parsed_metrics['day_of_week'][day][hour] = average_metrics(parsed_metrics['day_of_week'][day][hour])
+                parsed_metrics['day_of_week'][day]['total'] = average_metrics(parsed_metrics['day_of_week'][day]['total'])
+    if parsed_metrics.get('summary'):
+        parsed_metrics['summary'] = average_metrics(parsed_metrics['summary'])
     return parsed_metrics
 
 

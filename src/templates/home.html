@@ -2,46 +2,52 @@
 {% block content %}
 <div>
   <h1>Cluster Summary</h1>
+{% if summary %}
   <a class="btn bg-primary my-bg-primary text-light" href="{{url_for('node_pdf')|safe}}">Generate Pair PDF</a>
 </div>
-
-<div>
-  <table class="table">
-    <tr>
-      <th>Metric</th>
-      <th style="text-align:right">Min</th>
-      <th style="text-align:right">Mean</th>
-      <th style="text-align:right">Max</th>
-      <th style="text-align:right">Total</th>
-    </tr>
-    {% for metric in summary %}
+  <div>
+    <table class="table">
       <tr>
-        <td>{{ metric }}</td>
-        <td style="text-align:right">{{ summary[metric]['Min']|numberFormat }}</td>
-        <td style="text-align:right">{{ summary[metric]['Average']|numberFormat }}</td>
-        <td style="text-align:right">{{ summary[metric]['Max']|numberFormat }}</td>
-        <td style="text-align:right">{{ summary[metric]['Total']|numberFormat }}</td>
+        <th>Metric</th>
+        <th style="text-align:right">Min</th>
+        <th style="text-align:right">Mean</th>
+        <th style="text-align:right">Max</th>
+        <th style="text-align:right">Total</th>
       </tr>
+      {% for metric in summary %}
+        <tr>
+          <td>{{ metric }}</td>
+          <td style="text-align:right">{{ summary[metric]['Min']|numberFormat }}</td>
+          <td style="text-align:right">{{ summary[metric]['Average']|numberFormat }}</td>
+          <td style="text-align:right">{{ summary[metric]['Max']|numberFormat }}</td>
+          <td style="text-align:right">{{ summary[metric]['Total']|numberFormat }}</td>
+        </tr>
+      {% endfor %}
+    </table>
+  </div>
+
+  <div id='chart' class='chart'”></div>
+  <hr/>
+  <div id='chart2' class='chart'”></div>
+
+  <h2>VIPs</h2>
+  <div class="list-group">
+    {% for vip in session['vips'] %}
+        <a class="list-group-item  list-group-item-action" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a>
     {% endfor %}
-  </table>
-</div>
+  </div>
 
-<div id='chart' class='chart'”></div>
-<hr/>
-<div id='chart2' class='chart'”></div>
-
-<h2>VIPs</h2>
-<div class="list-group">
-  {% for vip in session['vips'] %}
-      <a class="list-group-item  list-group-item-action" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a>
-  {% endfor %}
-</div>
-
-<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
-<script type='text/javascript'>
-  var graphs = {{fig1_json | safe}};
-  Plotly.plot('chart',graphs,{});
-  var graphs2 = {{fig2_json | safe}};
-  Plotly.plot('chart2',graphs2,{});
-</script>
+  <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+  <script type='text/javascript'>
+    var graphs = {{fig1_json | safe}};
+    Plotly.plot('chart',graphs,{});
+    var graphs2 = {{fig2_json | safe}};
+    Plotly.plot('chart2',graphs2,{});
+  </script>
+{% else %}
+  </div>
+  <div>
+    <h2>No VIP data collected for this cluster.</h2>
+  </div>
+{% endif %}
 {% endblock content %}

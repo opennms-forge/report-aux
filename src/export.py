@@ -8,7 +8,8 @@ import plotly
 import json
 import ra_processing
 import time
-
+import shutil
+import os
 
 def numberFormat(value:float, round:int=2) -> str:
     num_format = "{:,." + str(round) + "f}"
@@ -138,7 +139,7 @@ def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list)
 
     return pdf
 
-def render_all_nodes_pdf():
+def render_all_nodes_pdf() -> None:
     start_time = time.time()
     f = open('ra_config/config.json')
     config = json.load(f)
@@ -147,6 +148,7 @@ def render_all_nodes_pdf():
     RAauth = HTTPBasicAuth(config['username'], config['password'])
     loop_count = 0
     vip_count = 0
+    clear_report_temp()
     for pair in config['nodes']:
         interfaces = []
         metrics = []
@@ -167,6 +169,18 @@ def render_all_nodes_pdf():
         vips = [vip.replace('/Common/', '') for vip in parsed_metrics if '/Common/' in vip]
         if vips:
             pdf = render_node_pdf(pair_name=pair_name, vips=vips, parsed_metrics=parsed_metrics, metrics=byte_metrics)
-        pdf.output(f"static/pdf/{pair_name.replace(':','_')}.pdf", 'F')
+        pdf.output(f"static/pdf/{pair_name.replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf", 'F')
+
+    shutil.make_archive(f"static/all_pairs_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}", 'zip', 'static/pdf/')
     end_time = time.time()
     print(f'Time to process {loop_count} pairs with {vip_count} VIPs: {end_time - start_time}')
+
+def clear_report_temp() -> None:
+    zip_files = os.scandir('static')
+    for file in zip_files:
+        if '.zip' in file.name:
+            os.remove(file.path)
+    pdf_files = os.scandir('static/pdf')
+    for file in pdf_files:
+        if '.pdf' in file.name:
+            os.remove(file.path)
