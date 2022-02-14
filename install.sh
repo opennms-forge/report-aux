@@ -1,4 +1,3 @@
-#!env bash
 # @author Mark Mahacek <mmahacek@opennms.com>
 
 python3 -m venv venv
