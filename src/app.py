@@ -1,5 +1,7 @@
 # app.py
 
+# Flask web front end
+
 from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, make_response, flash
 from flask_session import Session
@@ -8,7 +10,6 @@ from os.path import exists
 
 import json
 import plotly
-import uuid
 import base64
 import os
 import time
@@ -16,17 +17,22 @@ import time
 import ra_processing
 import trending
 import export
-#import remote_admin as data
 
 
 web = Flask(__name__)
 SESSION_TYPE = 'filesystem'
 SESSION_PERMANENT = False
-web.secret_key = "not_so_secret" #str(uuid.uuid4())
+web.secret_key = "not_so_secret"
 web.config.from_object(__name__)
 Session(web)
 
 def clear_temp(session:bool=False):
+    """Clear temporary files from disk
+
+    Args:
+        session (bool, optional): Clear user session cache.
+        Defaults to False.
+    """
     if session:
         session_files = os.scandir('flask_session')
         for file in session_files:
@@ -39,6 +45,13 @@ def clear_temp(session:bool=False):
 clear_temp(session=False)
 
 def update_settings(settings:dict={}):
+    """Get/Write settings to disk
+
+    Args:
+        settings (dict, optional): New settings to write to file.
+        If not provided, will read existing settings from disk.
+        Defaults to {}.
+    """
     new_settings = {}
     update = False
     if exists('ra_config/config.json'):
@@ -89,8 +102,18 @@ def page_not_found(e):
 
 @web.template_filter()
 def numberFormat(value:float, round:int=2) -> str:
+    """Formats numbers with commas and decimals
+
+    Args:
+        value (float): Number to format
+        round (int, optional): Number of decimals to round. Defaults to 2.
+
+    Returns:
+        str: String representation of formatted number
+    """
     num_format = "{:,." + str(round) + "f}"
     return num_format.format(float(value))
+
 
 @web.context_processor
 def global_vars():
@@ -102,6 +125,14 @@ def global_vars():
 
 
 def get_data(redirect:redirect) -> dict:
+    """Get data from remote OpenNMS instance
+
+    Args:
+        redirect (redirect): URL to redirect user after retreiving data.
+
+    Returns:
+        dict: Data from remote OpenNMS instance
+    """    """"""
     RA_url = web.my_config['url']
     RAauth = HTTPBasicAuth(web.my_config['username'], web.my_config['password'])
 
@@ -139,6 +170,11 @@ def get_data(redirect:redirect) -> dict:
 @web.route('/clear')
 @web.route('/clear/<new_pair>')
 def clear_cache(new_pair:int=0):
+    """Clear user's session cache
+
+    Args:
+        new_pair (int, optional): Specify node pair to load on next page. Defaults to 0.
+    """
     cookies = ['parsed_metrics', 'pair', 'interfaces', 'metrics', 'vips']
     for cookie in cookies:
         if cookie in session:
@@ -147,19 +183,9 @@ def clear_cache(new_pair:int=0):
     clear_temp()
     return redirect(url_for('home_page'))
 
-@web.route('/select')
-def vip_list():
-    pairs = {}
-    for i in range(0, len(web.my_config['nodes'])):
-        pairs[i] = web.my_config['nodes'][i]
-    return render_template('vip_list.html', pairs=pairs)
-
-@web.route('/blank')
-def blank_page():
-    return "Hello"
-
 @web.route('/')
 def home_page():
+    """Summary page for pair of nodes"""
     if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
@@ -182,6 +208,13 @@ def home_page():
 
 @web.route('/vip')
 def vip_page(vip:str=None):
+    """Summary page for a single VIP
+
+    Args:
+        vip (str, optional): Name of VIP to filter.
+        If omitted, renders first VIP found.
+        Defaults to None.
+    """
     if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
@@ -209,6 +242,7 @@ def vip_page(vip:str=None):
 
 @web.route('/node_pdf')
 def node_pdf():
+    """Generate PDF of node summary"""
     if 'parsed_metrics' not in session:
         return redirect(url_for('home_page'))
     start_time = time.time()
@@ -222,6 +256,13 @@ def node_pdf():
 
 @web.route('/vip_pdf')
 def vip_pdf(vip:str=None):
+    """Generate PDF of node summary
+
+    Args:
+        vip (str, optional): Name of VIP to filter.
+        If omitted, renders first VIP found.
+        Defaults to None.
+    """
     if 'parsed_metrics' not in session:
         return redirect(url_for('vip_page', vip=vip))
     if not vip:
@@ -244,6 +285,12 @@ def vip_pdf(vip:str=None):
 @web.route('/topn/')
 @web.route('/topn/<metric>')
 def top_n_page(metric:str=None):
+    """Renders TopN page of VIPs in pair
+
+    Args:
+        metric (str, optional): Name of metric to filter results by.
+        Defaults to None.
+    """
     if 'parsed_metrics' not in session:
         return redirect(url_for('vip_page'))
     if metric in session['parsed_metrics']['node[top_n]']:
@@ -255,6 +302,7 @@ def top_n_page(metric:str=None):
 
 @web.route('/settings', methods=['GET', 'POST'])
 def settings_page():
+    """View and update application settings"""
     if request.method == 'POST':
         update_settings(request.form.to_dict())
     with open('ra_config/logo.png', 'rb') as f:
@@ -276,6 +324,7 @@ def settings_page():
 
 @web.route('/all_nodes')
 def all_report_page():
+    """List all cached PDF files from report generation"""
     files = []
     zip = [None]
     pdf_files = os.listdir('static/pdf')

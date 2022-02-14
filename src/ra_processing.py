@@ -1,6 +1,6 @@
-# heatmap.py
+# ra_processing.py
 
-from models import Day
+# Collect data from OpenNMS instance
 
 from collections import Counter
 from requests.auth import HTTPBasicAuth
@@ -12,14 +12,34 @@ import collections
 import time
 import json
 
+
 def get_data(url:str, auth:HTTPBasicAuth) -> dict:
+    """Retreive data from OpenNMS API
+
+    Args:
+        url (str): URL to OpenNMS API
+        auth (HTTPBasicAuth): Authentication credentials
+
+    Returns:
+        dict: Raw API response
+    """
     headers = {'Accept': 'application/json'}
     print('Getting data from: ' + url)
     data = requests.get(url, auth=auth, headers=headers)
     return data.json()
 
 
-def post_data(url:str, auth:HTTPBasicAuth, payload) -> dict:
+def post_data(url:str, auth:HTTPBasicAuth, payload:dict) -> dict:
+    """Post data to OpenNMS API
+
+    Args:
+        url (str): URL to OpenNMS API
+        auth (HTTPBasicAuth): Authentication credentials
+        payload (dict): Data to post
+
+    Returns:
+        dict: Raw API response
+    """
     headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
     print(f"Getting data from: {url}/{payload['source'][0]['resourceId']}")
     data = requests.post(url, auth=auth, headers=headers, data=json.dumps(payload))
@@ -27,6 +47,11 @@ def post_data(url:str, auth:HTTPBasicAuth, payload) -> dict:
 
 
 def blank_histogram() -> dict:
+    """Generate default dict for interface
+
+    Returns:
+        dict: Blank interface template
+    """
     blank = {'ts':{}, 'summary':{}}
     blank['day_of_week'] = {0:{'total':{}}, 1:{'total':{}}, 2:{'total':{}}, 3:{'total':{}}, 4:{'total':{}}, 5:{'total':{}}, 6:{'total':{}}}
     blank['hour_of_day'] = {}
@@ -37,6 +62,14 @@ def blank_histogram() -> dict:
     return blank
 
 def average_metrics(metrics:dict) -> dict:
+    """Calculate average data for provided metrics
+
+    Args:
+        metrics (dict): Dictionary of metrics with list of values
+
+    Returns:
+        dict: Dictionary of metrics with average value
+    """
     for metric in metrics:
         if type(metrics[metric]) is list:
             metrics[metric] = [item for item in metrics[metric] if item != None]
@@ -49,6 +82,14 @@ def average_metrics(metrics:dict) -> dict:
     return metrics
 
 def average_lists(parsed_metrics:dict) -> dict:
+    """Calculate average data for provided metrics
+
+    Args:
+        parsed_metrics (dict): Dict of interface with lists of collected metrics
+
+    Returns:
+        dict: Dict of interface with averaged metrics
+    """
     if parsed_metrics.get('ts'):
         for ts in parsed_metrics['ts']:
             parsed_metrics['ts'][ts] = average_metrics(parsed_metrics['ts'][ts])
@@ -64,6 +105,14 @@ def average_lists(parsed_metrics:dict) -> dict:
 
 
 def top_n_stats(parsed_metrics:dict) -> dict:
+    """Generate Top N stats for all VIPs collected
+
+    Args:
+        parsed_metrics (dict): Collected metrics for all interfaces
+
+    Returns:
+        dict: TopN data for all interfaces
+    """
     top_n = {}
     trimmed_n = {}
     sorted_top_n = {}
@@ -87,6 +136,14 @@ def top_n_stats(parsed_metrics:dict) -> dict:
 
 
 def device_stats(parsed_metrics:dict) -> dict:
+    """Summarize data for all VIPs on device pair
+
+    Args:
+        parsed_metrics (dict): Dict of all interfaces with collected metrics
+
+    Returns:
+        dict: Summary average for device pair
+    """
     device = {}
     for interface in parsed_metrics:
         if 'node[' not in interface:
@@ -101,6 +158,20 @@ def device_stats(parsed_metrics:dict) -> dict:
 
 
 def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth, metrics:list, start:int, step:int=1) -> dict:
+    """Add metrics to collected data for specific VIP
+
+    Args:
+        url (str): URL to OpenNMS API
+        interface (str): Interface name to collect
+        parsed_metrics (dict): Previously collected metrics
+        auth (HTTPBasicAuth): Authentication credentials
+        metrics (list): List of metrics to reqiest
+        start (int): Timestamp for start of data to request
+        step (int, optional): Step between timestamps to reqest. Defaults to 1.
+
+    Returns:
+        dict: Previously collected metrics with new metrics added
+    """
     payload = {
         "start": start * -1,
         "step": step,
@@ -232,12 +303,30 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     return parsed_metrics
 
 
-def get_interfaces(base_url:str, auth:HTTPBasicAuth, node:str) -> dict:
-    data = get_data(f'{base_url}resources/fornode/{node}', auth=auth)
+def get_interfaces(url:str, auth:HTTPBasicAuth, node:str) -> dict:
+    """Identify available interfaces on provided node
+
+    Args:
+        url (str): URL to OpenNMS API
+        auth (HTTPBasicAuth): Authentication credentials
+        node (str): Foreign source name and ID of node
+
+    Returns:
+        dict: Raw API response
+    """
+    data = get_data(f'{url}resources/fornode/{node}', auth=auth)
     return data
 
 
 def filter_interfaces(interface_list:dict) -> list:
+    """Filter out unwanted interfaces
+
+    Args:
+        interface_list (dict): All resources available on node
+
+    Returns:
+        list: List of metrics available on VIP interface
+    """
     if_list = [interface for interface in interface_list['children']['resource'] if 'ltmVSStatName' in interface['stringPropertyAttributes']]
     if if_list:
         metrics = [rrd for rrd in if_list[0]['rrdGraphAttributes']]
@@ -250,6 +339,16 @@ def filter_interfaces(interface_list:dict) -> list:
 
 
 def summary_stats(parsed_metrics:dict, interface:str, metrics:list) -> dict:
+    """Calculate summary statistics for provided interface
+
+    Args:
+        parsed_metrics (dict): Collected metrics
+        interface (str): Interface to generate statistics for
+        metrics (list): Metrics to use for statistics
+
+    Returns:
+        dict: Dict of summary stats for provided interface
+    """
     summary = {}
     raw = {}
 

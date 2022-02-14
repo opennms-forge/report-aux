@@ -1,5 +1,7 @@
 # export.py
 
+# PDF generation
+
 from requests.auth import HTTPBasicAuth
 from fpdf import FPDF, HTMLMixin
 from datetime import datetime
@@ -12,6 +14,15 @@ import shutil
 import os
 
 def numberFormat(value:float, round:int=2) -> str:
+    """Formats numbers with commas and decimals
+
+    Args:
+        value (float): Number to format
+        round (int, optional): Number of decimals to round. Defaults to 2.
+
+    Returns:
+        str: String representation of formatted number
+    """
     num_format = "{:,." + str(round) + "f}"
     return num_format.format(float(value))
 
@@ -20,16 +31,19 @@ class PDF(FPDF, HTMLMixin):
     def __init__(self) -> None:
         super().__init__(orientation='P', unit='mm')
 
-    def lines(self):
-        self.rect(5.0, 5.0, 200.0,287.0)
-
     def titles(self, title:str):
+        """Add heading to page
+
+        Args:
+            title (str): Page title
+        """
         self.set_xy(5.0,11.0)
         self.set_font('Helvetica', 'B', 16)
         self.set_text_color(0, 0, 0)
         self.cell(w=200.0, h=18.0, align='C', txt=title, border=0)
 
     def footer(self):
+        """Override footer function to add page numbers"""
         self.set_y(-10)
 
         self.set_font('Helvetica', size=8)
@@ -41,6 +55,12 @@ class PDF(FPDF, HTMLMixin):
         self.cell(0, 10, align='R', txt=self.created.strftime("%m/%d/%Y, %H:%M:%S"), border=0)
 
     def template_page(self, pair_name:str, page_name:str):
+        """Add page to PDF with consistent theme
+
+        Args:
+            pair_name (str): Name of node pair
+            page_name (str): Name of page
+        """
         self.add_page()
         self.start_section(page_name)
         self.set_fill_color(r=180, g=182, b=200)
@@ -54,10 +74,24 @@ class PDF(FPDF, HTMLMixin):
         self.titles(f"""{pair_name}     {page_name}""")
 
     def add_image(self, image_path:str, x:int, y:int):
+        """Add image to current page
+
+        Args:
+            image_path (str): Path to image file
+            x (int): X coordinate of image
+            y (int): Y coordinate of image
+        """
         self.set_xy(x, y)
         self.image(image_path, link='', type='', h=100.0)
 
     def interface_summary(self, summary:dict, x:int, y:int):
+        """Add interface summary to page
+
+        Args:
+            summary (dict): VIP summary from parsed metrics
+            x (int): X coordinate of table
+            y (int): Y coordinate of table
+        """
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         table_html = """
@@ -79,6 +113,14 @@ class PDF(FPDF, HTMLMixin):
         self.write_html(table_html)
 
     def top_n_summary(self, pair_name:str, top_n:dict, x:int, y:int):
+        """Add page to PDF with top N summary
+
+        Args:
+            pair_name (str): Name of node pair
+            top_n (dict): Name of metric and top N values
+            x (int): X coordinate of table
+            y (int): Y coordinate of table
+        """        
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         for metric in top_n:
@@ -99,12 +141,36 @@ class PDF(FPDF, HTMLMixin):
                 self.write_html(table_html)
 
 def generate_pdf(pair:str='', title:str='', date_stamp:datetime=datetime.now()) -> PDF:
+    """Create new PDF object
+
+    Args:
+        pair (str, optional): Node pair name. Defaults to ''.
+        title (str, optional): First page's title. Defaults to ''.
+        date_stamp (datetime, optional): Timestamp for footer. Defaults to datetime.now().
+
+    Returns:
+        PDF: PDF with blank first page
+    """
     pdf = PDF()
     pdf.created = date_stamp
     pdf.template_page(pair, title)
     return pdf
 
 def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pdf:PDF=None) -> PDF:
+    """Add VIP page to existing last page of PDF
+
+    Args:
+        pair_name (str): Node pair name
+        vip (str): VIP name
+        parsed_metrics (dict): Data to include on the page
+        metrics (list): List of metrics to include on the page
+        pdf (PDF, optional): PDF object to use.
+        Will create new PDF if None.
+        Defaults to None.
+
+    Returns:
+        PDF: PDF with VIP summary added
+    """
     if not pdf:
         pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'])
     if vip != 'Summary':
@@ -128,6 +194,17 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
     return pdf
 
 def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list) -> PDF:
+    """Geneate PDF for all VIPs on a node pair
+
+    Args:
+        pair_name (str): Node pair name
+        vips (list): List of VIPs to include on the report
+        parsed_metrics (dict): Data to include on the page
+        metrics (list): List of metrics to include on the page
+
+    Returns:
+        PDF: PDF with all VIPs added
+    """
     pdf = generate_pdf(pair_name, 'Summary', parsed_metrics['node[data]']['generated'])
     #pdf.interface_summary(parsed_metrics['node[device]']['stats'], 10, 30)
     pdf = render_vip_pdf(pair_name, 'Summary', parsed_metrics, metrics, pdf)
@@ -140,6 +217,7 @@ def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list)
     return pdf
 
 def render_all_nodes_pdf() -> None:
+    """Generate PDF for all node pairs"""
     start_time = time.time()
     f = open('ra_config/config.json')
     config = json.load(f)
@@ -179,6 +257,7 @@ def render_all_nodes_pdf() -> None:
     print(f'Time to process {loop_count} pairs with {vip_count} VIPs: {end_time - start_time}')
 
 def clear_report_temp() -> None:
+    """Clear all cached report files"""
     zip_files = os.scandir('static')
     for file in zip_files:
         if '.zip' in file.name:

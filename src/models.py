@@ -1,8 +1,11 @@
 # models.py
 
+# Custom object models
+
 from enum import Enum
 
 class Day(Enum):
+    """Map datetime.weekday() to a string"""
     Monday = 0
     Tuesday = 1
     Wednesday = 2

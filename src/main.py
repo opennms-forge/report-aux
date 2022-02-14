@@ -1,3 +1,7 @@
+# main.py
+
+# Placeholder for running in Docker
+
 from app import web
 
 webapp = web

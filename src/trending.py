@@ -1,6 +1,8 @@
 # trending.py
 # cspell:ignore tozeroy
 
+# Generate trending stats on processed metrics
+
 from datetime import datetime
 from models import Day
 from ra_processing import average_metrics
@@ -9,10 +11,28 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 def byte_metrics(metrics:list) -> list:
+    """Filter all metrics to only include those related to bytes
+
+    Args:
+        metrics (list): List of all metrics found on nodes
+
+    Returns:
+        list: List of filtered metrics
+    """
     metrics = [metric for metric in metrics if 'Bytes' in metric]
     return list(set(metrics))
 
 def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
+    """Generate dataset for Plotly scatter graph of most active days/times
+
+    Args:
+        parsed_metrics (dict): Data for all found interfaces
+        interface (str): Name of the interface to be analyzed
+        label (list): List of metrics to include in the graph
+
+    Returns:
+        dict: Data for Plotly scatter graph
+    """
     trend = {'x': [], 'y': [], 'z': [], 'c': [], 'hour':{}}
     for j in parsed_metrics[interface]['day_of_week']:
         if j != 'total':
@@ -62,6 +82,15 @@ def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
 
 
 def find_weekends(parsed_metrics:dict, interface:str) -> list:
+    """Determine weekends for Plotly line graph shading
+
+    Args:
+        parsed_metrics (dict): Data for all found interfaces
+        interface (str): Name of the interface to be analyzed
+
+    Returns:
+        list: List of start/end timestamps for weekends
+    """
     weekends = []
     weekend_start = []
     weekend_end = []
@@ -94,6 +123,16 @@ def find_weekends(parsed_metrics:dict, interface:str) -> list:
 
 
 def time_lines(parsed_metrics:dict, interface:str, label:list) -> dict:
+    """Generate data for Plotly line graph
+
+    Args:
+        parsed_metrics (dict): Data for all found interfaces
+        interface (str): Name of the interface to be analyzed
+        label (list): Metrics to include in the graph
+
+    Returns:
+        dict: Set of datasets for Plotly line graph
+    """
     stats_out = {'x': [], 'y': []}
     stats_in = {'x': [], 'y': []}
     for i in parsed_metrics:
@@ -117,10 +156,17 @@ def time_lines(parsed_metrics:dict, interface:str, label:list) -> dict:
             break
     return stats_out, stats_in
 
-#theme = {'out': 'rgba(165, 50, 94,1)', 'in': 'rgba(20, 209, 223,1)', 'weekend': 'rgba(126,129,157,1)'}
 theme = {'out': '#204a87', 'in': '#4e9a06', 'weekend': 'rgba(126,129,157,1)', 'outfill': '#3465a4', 'infill': '#73d216'}
 
 def get_trend_graph(trend:dict) -> px.scatter:
+    """Generate Plotly time trend graph
+
+    Args:
+        trend (dict): Graph dataset from time_trend()
+
+    Returns:
+        px.scatter: Scatter plot of time trends
+    """
     fig = px.scatter(x=trend['x'], y=trend['y'], size=trend['z'], color=trend['c'], labels={'x': 'Day of Week', 'y': 'Time', 'size': 'Bytes', 'color': 'Metric'}, color_discrete_map={"Bytes Out": theme['out'], "Bytes In": theme['in']})
     fig.add_shape(y0="8:00", y1="8:00", x0=-.5, x1=7.5, type="line", line_color="black", line_width=1)
     if '17:00' in trend['y']:
@@ -131,17 +177,19 @@ def get_trend_graph(trend:dict) -> px.scatter:
     return fig
 
 def get_trend_line(stats_out:dict, stats_in:dict, weekends:dict) -> go.Figure:
+    """Generate Plotly line graph of raw traffic data
+
+    Args:
+        stats_out (dict): Output data from time_lines()
+        stats_in (dict): Output data from time_lines()
+        weekends (dict): Output from find_weekends()
+
+    Returns:
+        go.Figure: Line graph of traffic
+    """
     fig2 = go.Figure()
     fig2.add_trace(go.Scatter(x=stats_out['x'], y=stats_out['y'], mode="lines", name="BytesOut", line={'color':theme['out']}, fill='tozeroy', fillcolor=theme['outfill']))
     fig2.add_trace(go.Scatter(x=stats_in['x'], y=stats_in['y'], mode="lines", name="BytesIn", line={'color':theme['in']}, fill='tozeroy', fillcolor=theme['infill']))
     for weekend in weekends:
         fig2.add_vrect(x0=weekend[0], x1=weekend[1], fillcolor=theme['weekend'], opacity=0.25, layer="below", line_width=0)
     return fig2
-
-# area rawbitsIn #73d216
-# line rawbitsIn #4e9a06
-# area rawbitsOutNeg #3465a4
-# line rawbitsOutNeg #204a87
-
-#AREA #00ff00
-#AREA bitsOutNeg #0000ff
