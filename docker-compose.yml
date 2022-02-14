@@ -6,4 +6,4 @@ services:
     ports:
       - "5000:5000"
     volumes:
-      - .:/app
+      - ./ra_config:/app/ra_config

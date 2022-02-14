@@ -48,9 +48,9 @@ class PDF(FPDF, HTMLMixin):
         self.set_xy(8.0,7.0)
         self.image('static/images/OpenNMS_Horizontal-Logo_Light-BG-retina-website.png', link='', type='', h=7)
         self.set_xy(90.0,7.0)
-        self.image('ra_config/logo.png', link='', type='', h=7)
-        self.set_xy(160.0,7.0)
         self.image('ra_config/logo_customer.png', link='', type='', h=7)
+        self.set_xy(160.0,7.0)
+        self.image('ra_config/logo.png', link='', type='', h=7)
         self.titles(f"""{pair_name}     {page_name}""")
 
     def add_image(self, image_path:str, x:int, y:int):
