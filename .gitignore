@@ -162,6 +162,7 @@ cython_debug/
 local_test/
 *.ipynb
 
+ra_config/
 src/ra_config/
 !src/ra_config/.readme
 parsed_data.json
