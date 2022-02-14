@@ -1,5 +1,6 @@
 # app.py
 
+from datetime import datetime
 from flask import Flask, render_template, request, session, redirect, url_for, make_response, flash
 from flask_session import Session
 from requests.auth import HTTPBasicAuth
@@ -10,6 +11,7 @@ import plotly
 import uuid
 import base64
 import os
+import time
 
 import ra_processing
 import trending
@@ -209,8 +211,10 @@ def vip_page(vip:str=None):
 def node_pdf():
     if 'parsed_metrics' not in session:
         return redirect(url_for('home_page'))
+    start_time = time.time()
     pdf = export.render_node_pdf(pair_name=session['pair']['name'], vips=session['vips'], parsed_metrics=session['parsed_metrics'], metrics=trending.byte_metrics(session['metrics']))
     response = make_response(pdf.output())
+    pdf.output(f"static/pdf/{session['pair']['name'].replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf", 'F')
     response.headers.set('Content-Disposition', 'attachment', filename=session['pair']['name'].replace(':','_') + '.pdf')
     response.headers.set('Content-Type', 'application/pdf')
     return response

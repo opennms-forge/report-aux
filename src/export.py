@@ -164,12 +164,14 @@ def render_all_nodes_pdf() -> None:
 
         pair_name = ":".join(name)
         parsed_metrics = ra_processing.main(RA_url, RAauth, interfaces, metrics)
+        print(f'Collected data for {pair_name}')
         vip_count += parsed_metrics['node[data]']['count']
         byte_metrics = trending.byte_metrics(metrics)
         vips = [vip.replace('/Common/', '') for vip in parsed_metrics if '/Common/' in vip]
         if vips:
             pdf = render_node_pdf(pair_name=pair_name, vips=vips, parsed_metrics=parsed_metrics, metrics=byte_metrics)
         pdf.output(f"static/pdf/{pair_name.replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf", 'F')
+        print(f'Rendered {pair_name} PDF')
 
     shutil.make_archive(f"static/all_pairs_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}", 'zip', 'static/pdf/')
     end_time = time.time()

@@ -1,20 +1,29 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
-  <h1>All report nodes</h1>
+  <h1>Saved Reports</h1>
 </div>
 <div>
 
 <ul>
-  {% for file in zip %}
-    <li><a href="{{url_for('static', filename=file.name)}}" target="_blank">{{file.name}}</a></li>
-  {% endfor %}
+  {% if zip %}
+    {% for file in zip %}
+      <li><a href="{{url_for('static', filename=file.name)}}" target="_blank">{{file.name}}</a></li>
+    {% endfor %}
+  {% else %}
+    <li>No ZIP archive exists yet</li>
+  {% endif %}
+
 </ul>
 
 
 <ul>
-{% for file in files %}
-  <li><a href="{{url_for('static', filename='pdf/'+file.name)}}" target="_blank">{{file.name}}</a></li>
-{% endfor %}
+  {% if files %}
+    {% for file in files %}
+      <li><a href="{{url_for('static', filename='pdf/'+file.name)}}" target="_blank">{{file.name}}</a></li>
+    {% endfor %}
+  {% else %}
+    <li>No pair reports exist yet</li>
+  {% endif %}
 </ul>
 {% endblock content %}
