@@ -214,8 +214,9 @@ def node_pdf():
     start_time = time.time()
     pdf = export.render_node_pdf(pair_name=session['pair']['name'], vips=session['vips'], parsed_metrics=session['parsed_metrics'], metrics=trending.byte_metrics(session['metrics']))
     response = make_response(pdf.output())
-    pdf.output(f"static/pdf/{session['pair']['name'].replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf", 'F')
-    response.headers.set('Content-Disposition', 'attachment', filename=session['pair']['name'].replace(':','_') + '.pdf')
+    filename = f"{session['pair']['name'].replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf"
+    pdf.output(f"static/pdf/{filename}", 'F')
+    response.headers.set('Content-Disposition', 'attachment', filename=filename)
     response.headers.set('Content-Type', 'application/pdf')
     return response
 
@@ -228,9 +229,11 @@ def vip_pdf(vip:str=None):
     if not vip:
         vip = session['vips'][0]
     if vip in session['vips']:
+        start_time = time.time()
         pdf = export.render_vip_pdf(pair_name=session['pair']['name'], vip=vip, parsed_metrics=session['parsed_metrics'], metrics=trending.byte_metrics(session['metrics']))
         response = make_response(pdf.output())
-        response.headers.set('Content-Disposition', 'attachment', filename=vip + '.pdf')
+        filename = f"{vip}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf"
+        response.headers.set('Content-Disposition', 'attachment', filename=filename)
         response.headers.set('Content-Type', 'application/pdf')
         return response
     else:
@@ -275,12 +278,12 @@ def settings_page():
 def all_report_page():
     files = []
     zip = [None]
-    pdf_files = os.scandir('static/pdf')
+    pdf_files = os.listdir('static/pdf')
     for file in pdf_files:
-        if '.pdf' in file.name:
+        if '.pdf' in file:
             files.append(file)
-    zip_files = os.scandir('static')
+    zip_files = os.listdir('static')
     for file in zip_files:
-        if '.zip' in file.name:
+        if '.zip' in file:
             zip = [file]
     return render_template('all_nodes.html', files=files, zip=zip)

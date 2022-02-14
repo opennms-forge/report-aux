@@ -170,7 +170,8 @@ def render_all_nodes_pdf() -> None:
         vips = [vip.replace('/Common/', '') for vip in parsed_metrics if '/Common/' in vip]
         if vips:
             pdf = render_node_pdf(pair_name=pair_name, vips=vips, parsed_metrics=parsed_metrics, metrics=byte_metrics)
-        pdf.output(f"static/pdf/{pair_name.replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf", 'F')
+        filename = f"{pair_name.replace(':','_')}_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}.pdf"
+        pdf.output(f"static/pdf/{filename}", 'F')
         print(f'Rendered {pair_name} PDF')
 
     shutil.make_archive(f"static/all_pairs_{datetime.fromtimestamp(start_time).strftime('%Y_%m_%d_%H_%M')}", 'zip', 'static/pdf/')

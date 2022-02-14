@@ -8,7 +8,7 @@
 <ul>
   {% if zip %}
     {% for file in zip %}
-      <li><a href="{{url_for('static', filename=file.name)}}" target="_blank">{{file.name}}</a></li>
+      <li><a href="{{url_for('static', filename=file)}}" target="_blank">{{file}}</a></li>
     {% endfor %}
   {% else %}
     <li>No ZIP archive exists yet</li>
@@ -20,7 +20,7 @@
 <ul>
   {% if files %}
     {% for file in files %}
-      <li><a href="{{url_for('static', filename='pdf/'+file.name)}}" target="_blank">{{file.name}}</a></li>
+      <li><a href="{{url_for('static', filename='pdf/'+file)}}" target="_blank">{{file}}</a></li>
     {% endfor %}
   {% else %}
     <li>No pair reports exist yet</li>
