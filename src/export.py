@@ -120,7 +120,7 @@ class PDF(FPDF, HTMLMixin):
             top_n (dict): Name of metric and top N values
             x (int): X coordinate of table
             y (int): Y coordinate of table
-        """        
+        """
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         for metric in top_n:
@@ -133,7 +133,7 @@ class PDF(FPDF, HTMLMixin):
                 table_html += f'</tr>'
                 for site in top_n[metric]:
                     table_html += f'<tr>'
-                    table_html += f'<td>{site}</td>'
+                    table_html += f'<td>{site.rsplit("/", 1)[1]}</td>'
                     table_html += f'<td align="right"><font face="Courier">{numberFormat(top_n[metric][site])}</font></td>'
                     table_html += f'</tr>'
                 table_html += f'<tr><td> </td><td> </td></tr>'
@@ -175,6 +175,7 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
         pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'])
     if vip != 'Summary':
         interface = '/Common/' + vip
+        vip = vip.rsplit("/", 1)[1]
     else:
         interface = 'node[device]'
     print(f'Rendering {pair_name}:{vip} PDF page')
