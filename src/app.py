@@ -166,6 +166,16 @@ def get_data(redirect:redirect) -> dict:
 
     return redirect
 
+def get_pair_list() -> None:
+    """Get names of pairs from OpenNMS instance"""
+    pairs = [list(i) for i in web.my_config['nodes']]
+    for i in range(0, len(pairs)):
+        for node in range(0, len(pairs[i])):
+            pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
+    web.pair_list = list(pairs)
+
+#get_pair_list()
+
 
 @web.route('/clear')
 @web.route('/clear/<new_pair>')
@@ -186,11 +196,20 @@ def clear_cache(new_pair:int=0):
 @web.route('/loading')
 def loading_page():
     if 'parsed_metrics' not in session:
-        get_data(url_for('home_page'))
-    return redirect(url_for('home_page'))
+        get_data(url_for('pair_page'))
+    return redirect(url_for('pair_page'))
 
 @web.route('/')
 def home_page():
+    if not hasattr(web, 'pair_list'):
+        get_pair_list()
+    pair_list = []
+    for pair in web.pair_list:
+        pair_list.append(":".join(pair))
+    return render_template('home.html', pair_list=pair_list)
+
+@web.route('/pair')
+def pair_page():
     """Summary page for pair of nodes"""
     if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
@@ -210,7 +229,7 @@ def home_page():
     else:
         fig1_json = json.dumps({})
         fig2_json = json.dumps({})
-    return render_template('home.html', fig1_json=fig1_json, fig2_json=fig2_json, summary=session['parsed_metrics']['node[device]']['stats'])
+    return render_template('pair.html', fig1_json=fig1_json, fig2_json=fig2_json, summary=session['parsed_metrics']['node[device]']['stats'])
 
 @web.route('/vip')
 def vip_page(vip:str=None):
@@ -250,7 +269,7 @@ def vip_page(vip:str=None):
 def node_pdf():
     """Generate PDF of node summary"""
     if 'parsed_metrics' not in session:
-        return redirect(url_for('home_page'))
+        return redirect(url_for('pair_page'))
     start_time = time.time()
     pdf = export.render_node_pdf(pair_name=session['pair']['name'], vips=session['vips'], parsed_metrics=session['parsed_metrics'], metrics=trending.byte_metrics(session['metrics']))
     response = make_response(pdf.output())
@@ -317,14 +336,10 @@ def settings_page():
         logocustomer= base64.b64encode(f.read()).decode('utf-8')
     config = dict(web.my_config)
     config['nodes'] = json.dumps(config['nodes'])
-    if not session.get('pair_list'):
-        pairs = [list(i) for i in web.my_config['nodes']]
-        for i in range(0, len(pairs)):
-            for node in range(0, len(pairs[i])):
-                pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
-        session['pair_list'] = list(pairs)
+    if not hasattr(web, 'pair_list'):
+        get_pair_list()
     pair_list = []
-    for pair in session['pair_list']:
+    for pair in web.pair_list:
         pair_list.append(":".join(pair))
     return render_template('settings.html', config=config, logoimage=logoimage, logocustomer=logocustomer, pair_list=pair_list)
 

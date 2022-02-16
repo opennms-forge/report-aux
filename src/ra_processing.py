@@ -5,7 +5,7 @@
 from collections import Counter
 from requests.auth import HTTPBasicAuth
 from urllib.parse import quote
-from datetime import datetime
+from datetime import datetime, timedelta
 import requests
 import numpy as np
 import collections
@@ -157,7 +157,7 @@ def device_stats(parsed_metrics:dict) -> dict:
     return device
 
 
-def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth, metrics:list, start:int, step:int=1) -> dict:
+def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth, metrics:list, start:int, end:int=0, step:int=1) -> dict:
     """Add metrics to collected data for specific VIP
 
     Args:
@@ -165,8 +165,9 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
         interface (str): Interface name to collect
         parsed_metrics (dict): Previously collected metrics
         auth (HTTPBasicAuth): Authentication credentials
-        metrics (list): List of metrics to reqiest
+        metrics (list): List of metrics to request
         start (int): Timestamp for start of data to request
+        end (int): Timestamp for end of data to request
         step (int, optional): Step between timestamps to reqest. Defaults to 1.
 
     Returns:
@@ -174,6 +175,7 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
     """
     payload = {
         "start": start * -1,
+        "end": end,
         "step": step,
         "source": [],
         "expression": []
@@ -261,10 +263,11 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
     return parsed_metrics
 
 
-def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[]) -> dict:
+def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[], data_start:int=None, data_end:int=None) -> dict:
     start_time = time.time()
+    generated = datetime.now()
     parsed_metrics = {'node[device]': {}}
-    parsed_metrics['node[data]'] = {'generated':datetime.now()}
+    parsed_metrics['node[data]'] = {'generated': generated}
 
     minute = 60000
     hour = minute * 60
@@ -273,6 +276,11 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     month = day * 30
     step = 1
     loop_count = 0
+    if not data_start:
+        data_start = int(month)
+    if not data_end:
+        data_end = 0
+    parsed_metrics['node[data]']['range'] = {'start': generated, 'end': generated - timedelta(days = 30)}
 
     for interface in interfaces:
         loop_count += 1
@@ -281,7 +289,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
         parsed_metrics[interface] = {'ts':{}}
 
         metric_url = f'{base_url}measurements'
-        parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, month, step)
+        parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, data_start, data_end, step)
         #for label in metric_labels:
         #    metric_url = f'{base_url}measurements/{quote(interface)}/{label}?start=-{week*2}&step={step}'
         #    parsed_metrics = add_metrics2(metric_url, interface, parsed_metrics, auth)

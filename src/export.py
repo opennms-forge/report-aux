@@ -29,7 +29,7 @@ def numberFormat(value:float, round:int=2) -> str:
 
 class PDF(FPDF, HTMLMixin):
     def __init__(self) -> None:
-        super().__init__(orientation='P', unit='mm')
+        super().__init__(orientation='P', unit='mm', format='letter')
 
     def titles(self, title:str):
         """Add heading to page
@@ -40,7 +40,7 @@ class PDF(FPDF, HTMLMixin):
         self.set_xy(5.0,11.0)
         self.set_font('Helvetica', 'B', 16)
         self.set_text_color(0, 0, 0)
-        self.cell(w=200.0, h=18.0, align='C', txt=title, border=0)
+        self.cell(w=self.w-10, h=18.0, align='C', txt=title, border=0)
 
     def footer(self):
         """Override footer function to add page numbers"""
@@ -50,9 +50,15 @@ class PDF(FPDF, HTMLMixin):
         self.set_text_color(0, 0, 0)
 
         # Add a page number
+        if hasattr(self, 'report_time'):
+            text = f'Report Covers: {self.report_time["start"].strftime("%m/%d/%Y")} to {self.report_time["end"].strftime("%m/%d/%Y")}'
+        else:
+            text = f'Generated: {self.created.strftime("%m/%d/%Y, %H:%M:%S")}'
         page = 'Page ' + str(self.page_no()) + '/{nb}'
-        self.cell(0, 10, page, 0, 0, 'C')
-        self.cell(0, 10, align='R', txt=self.created.strftime("%m/%d/%Y, %H:%M:%S"), border=0)
+        self.set_x(5)
+        self.cell(w=self.w-10, h=5, align='R', txt=page, border=0)
+        self.set_x(5)
+        self.cell(w=self.w-10, h=5, align='L', txt=text, border=0)
 
     def template_page(self, pair_name:str, page_name:str):
         """Add page to PDF with consistent theme
@@ -64,16 +70,16 @@ class PDF(FPDF, HTMLMixin):
         self.add_page()
         self.start_section(page_name)
         self.set_fill_color(r=180, g=182, b=200)
-        self.rect(5.0, 5.0, 200.0,20.0)
+        self.rect(5.0, 5.0, self.w-10, 20.0)
         self.set_xy(8.0,7.0)
         self.image('static/images/OpenNMS_Horizontal-Logo_Light-BG-retina-website.png', link='', type='', h=7)
-        self.set_xy(90.0,7.0)
+        self.set_xy((self.w/2)-25,7.0)
         self.image('ra_config/logo_customer.png', link='', type='', h=7)
-        self.set_xy(160.0,7.0)
+        self.set_xy(self.w-51,7.0)
         self.image('ra_config/logo.png', link='', type='', h=7)
         self.titles(f"""{pair_name}     {page_name}""")
 
-    def add_image(self, image_path:str, x:int, y:int):
+    def add_image(self, image_path:str, x:float, y:float):
         """Add image to current page
 
         Args:
@@ -84,7 +90,7 @@ class PDF(FPDF, HTMLMixin):
         self.set_xy(x, y)
         self.image(image_path, link='', type='', h=100.0)
 
-    def interface_summary(self, summary:dict, x:int, y:int):
+    def interface_summary(self, summary:dict, x:float, y:float):
         """Add interface summary to page
 
         Args:
@@ -112,7 +118,7 @@ class PDF(FPDF, HTMLMixin):
         table_html += "</table>"
         self.write_html(table_html)
 
-    def top_n_summary(self, pair_name:str, top_n:dict, x:int, y:int):
+    def top_n_summary(self, pair_name:str, top_n:dict, x:float, y:float):
         """Add page to PDF with top N summary
 
         Args:
@@ -133,26 +139,32 @@ class PDF(FPDF, HTMLMixin):
                 table_html += f'</tr>'
                 for site in top_n[metric]:
                     table_html += f'<tr>'
-                    table_html += f'<td>{site.rsplit("/", 1)[1]}</td>'
+                    if '/' in site:
+                        table_html += f'<td>{site.rsplit("/", 1)[1]}</td>'
+                    else:
+                        table_html += f'<td>{site}</td>'
                     table_html += f'<td align="right"><font face="Courier">{numberFormat(top_n[metric][site])}</font></td>'
                     table_html += f'</tr>'
                 table_html += f'<tr><td> </td><td> </td></tr>'
                 table_html += f'</table>'
                 self.write_html(table_html)
 
-def generate_pdf(pair:str='', title:str='', date_stamp:datetime=datetime.now()) -> PDF:
+def generate_pdf(pair:str='', title:str='', date_stamp:datetime=datetime.now(), report_time:dict={}) -> PDF:
     """Create new PDF object
 
     Args:
         pair (str, optional): Node pair name. Defaults to ''.
         title (str, optional): First page's title. Defaults to ''.
         date_stamp (datetime, optional): Timestamp for footer. Defaults to datetime.now().
+        report_time (dict, optional): Time range for report data for footer. Defaults to {}.
 
     Returns:
         PDF: PDF with blank first page
     """
     pdf = PDF()
     pdf.created = date_stamp
+    if report_time:
+        pdf.report_time = report_time
     pdf.template_page(pair, title)
     return pdf
 
@@ -172,10 +184,11 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
         PDF: PDF with VIP summary added
     """
     if not pdf:
-        pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'])
+        pdf = generate_pdf(pair_name, vip, parsed_metrics['node[data]']['generated'], parsed_metrics['node[data]']['range'])
     if vip != 'Summary':
         interface = '/Common/' + vip
-        vip = vip.rsplit("/", 1)[1]
+        if '/' in vip:
+            vip = vip.rsplit("/", 1)[1]
     else:
         interface = 'node[device]'
     print(f'Rendering {pair_name}:{vip} PDF page')
@@ -188,9 +201,9 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
     fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
 
     plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 60)
     plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 150)
 
     return pdf
 
@@ -206,7 +219,7 @@ def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list)
     Returns:
         PDF: PDF with all VIPs added
     """
-    pdf = generate_pdf(pair_name, 'Summary', parsed_metrics['node[data]']['generated'])
+    pdf = generate_pdf(pair_name, 'Summary', parsed_metrics['node[data]']['generated'], parsed_metrics['node[data]']['range'])
     #pdf.interface_summary(parsed_metrics['node[device]']['stats'], 10, 30)
     pdf = render_vip_pdf(pair_name, 'Summary', parsed_metrics, metrics, pdf)
     pdf.top_n_summary(pair_name, parsed_metrics['node[top_n]'], 10, 22)
