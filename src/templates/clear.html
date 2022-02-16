@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block head %}
+  <meta http-equiv="refresh" content="0;url={{ url_for('home_page') }}">
+{% endblock head %}
+{% block content %}
+<div>
+  <h1>{{title}}</h1>
+
+  <div><p>{{message}}</p></div>
+{% endblock content %}
