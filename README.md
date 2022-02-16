@@ -10,7 +10,7 @@ NOTE: Currently only reports on `ltmVSStatName` resources from F5 load balancers
 
 Make sure the following are installed prior to Python.
 
-* `yum install openssl-devel bzip2-devel`
+* `yum install openssl-devel bzip2-devel xz-devel`
 
 ## Installation
 
