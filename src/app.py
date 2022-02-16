@@ -187,7 +187,7 @@ def clear_cache(new_pair:int=0):
 def loading_page():
     if 'parsed_metrics' not in session:
         get_data(url_for('home_page'))
-    return redirect(url_for('clear_cache'))
+    return redirect(url_for('home_page'))
 
 @web.route('/')
 def home_page():
