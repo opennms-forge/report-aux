@@ -181,7 +181,13 @@ def clear_cache(new_pair:int=0):
             session.pop(cookie)
     session['new_pair'] = int(new_pair)
     clear_temp()
-    return redirect(url_for('home_page'))
+    return render_template('clear.html', title="Loading Data", message="Please wait while loading metrics")
+
+@web.route('/loading')
+def loading_page():
+    if 'parsed_metrics' not in session:
+        get_data(url_for('home_page'))
+    return redirect(url_for('clear_cache'))
 
 @web.route('/')
 def home_page():
@@ -189,7 +195,7 @@ def home_page():
     if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
-        get_data(url_for('vip_page'))
+        return redirect(url_for('clear_cache'))
     if session['parsed_metrics']['node[device]'].get('stats'):
         weekends = trending.find_weekends(session['parsed_metrics'], 'node[device]')
         metric_list = trending.byte_metrics(session['metrics'])
@@ -218,7 +224,7 @@ def vip_page(vip:str=None):
     if web.my_config['url'] is None:
         return redirect(url_for('settings_page'))
     if 'parsed_metrics' not in session:
-        get_data(url_for('vip_page', vip=vip))
+        return redirect(url_for('clear_cache'))
     if not vip:
         vip = request.args.get('vip')
     if not vip:
