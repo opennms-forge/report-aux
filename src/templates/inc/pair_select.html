@@ -1,10 +1,11 @@
-{% if session['pair_list'] %}
-<div class="dropdown">
-  <button class="btn btn-secondary my-btn-secondary dropdown-toggle" type="button" id="pairselect" data-bs-toggle="dropdown" aria-expanded="false">Set current F5 pair for reporting</button>
-  <ul class="dropdown-menu vip-menu" aria-labelledby="pairselect">
-      {% for pair in pair_list %}
-          <li><a class="dropdown-item {{'active my-active' if loop.index0 == session['new_pair']}}" href="{{url_for('clear_cache', new_pair=loop.index0)}}">{{pair}}</a></li>
-      {% endfor %}
-  </ul>
+{% if pair_list %}
+<div class="mb-3">
+  <label for="pairselect">Set current F5 pair for reporting</label>
+  <select class="form-select" aria-label="Select F5 Pair" id="pairselect" name="pairselect">
+    <option disabled>Select F5 Pair</option>
+    {% for pair in pair_list %}
+      <option {{'selected' if loop.index0 == session['new_pair'] }} value="{{loop.index0}}">{{pair}}</option>
+    {% endfor %}
+  </select>
 </div>
 {% endif %}

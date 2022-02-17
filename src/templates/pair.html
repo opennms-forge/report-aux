@@ -2,6 +2,7 @@
 {% block content %}
 <div>
   <h1>Cluster Summary</h1>
+    <h3>{{session["parsed_metrics"]["node[data]"]["range"]["start"].strftime("%m/%d/%Y")}} to {{session["parsed_metrics"]["node[data]"]["range"]["end"].strftime("%m/%d/%Y")}}</h3>
 {% if summary %}
   <a class="btn bg-primary my-bg-primary text-light" href="{{url_for('node_pdf')|safe}}">Generate Pair PDF</a>
 </div>

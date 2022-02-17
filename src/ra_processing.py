@@ -4,7 +4,6 @@
 
 from collections import Counter
 from requests.auth import HTTPBasicAuth
-from urllib.parse import quote
 from datetime import datetime, timedelta
 import requests
 import numpy as np
@@ -174,7 +173,7 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
         dict: Previously collected metrics with new metrics added
     """
     payload = {
-        "start": start * -1,
+        "start": start,
         "end": end,
         "step": step,
         "source": [],
@@ -268,6 +267,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     generated = datetime.now()
     parsed_metrics = {'node[device]': {}}
     parsed_metrics['node[data]'] = {'generated': generated}
+    parsed_metrics['node[data]']['range'] = {}
 
     minute = 60000
     hour = minute * 60
@@ -277,10 +277,15 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     step = 1
     loop_count = 0
     if not data_start:
-        data_start = int(month)
+        data_start = int(month) * -1
+        parsed_metrics['node[data]']['range']['start'] = generated - timedelta(days=30)
+    else:
+        parsed_metrics['node[data]']['range']['start'] = datetime.fromtimestamp(data_start/1000)
     if not data_end:
         data_end = 0
-    parsed_metrics['node[data]']['range'] = {'start': generated, 'end': generated - timedelta(days = 30)}
+        parsed_metrics['node[data]']['range']['end'] = datetime.now()
+    else:
+        parsed_metrics['node[data]']['range']['end'] = datetime.fromtimestamp(data_end/1000)
 
     for interface in interfaces:
         loop_count += 1
@@ -290,9 +295,6 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
 
         metric_url = f'{base_url}measurements'
         parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, data_start, data_end, step)
-        #for label in metric_labels:
-        #    metric_url = f'{base_url}measurements/{quote(interface)}/{label}?start=-{week*2}&step={step}'
-        #    parsed_metrics = add_metrics2(metric_url, interface, parsed_metrics, auth)
 
     for interface in parsed_metrics:
         if 'node[' not in interface:

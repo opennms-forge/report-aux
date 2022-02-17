@@ -138,7 +138,7 @@ def get_data(redirect:redirect) -> dict:
 
     interfaces = []
     metrics = []
-
+    epoch = datetime.utcfromtimestamp(0)
     if not session.get('new_pair'):
         session['new_pair'] = 0
     if not session.get('pair'):
@@ -146,6 +146,14 @@ def get_data(redirect:redirect) -> dict:
     pair = [label for label in session['pair']['nodes']]
     if not pair:
         pair = web.my_config["nodes"][session['new_pair']]
+    if session.get('start_date'):
+        start_date = int((session['start_date'] - epoch).total_seconds()) * 1000
+    else:
+        start_date = None
+    if session.get('end_date'):
+        end_date = int((session['end_date'] - epoch).total_seconds()) * 1000
+    else:
+        end_date = None
 
     for node in pair:
         interface_list = ra_processing.get_interfaces(RA_url, RAauth, node)
@@ -160,7 +168,14 @@ def get_data(redirect:redirect) -> dict:
     session['pair']['name'] = ":".join([session['pair']['nodes'][node]['label'] for node in session['pair']['nodes']])
     session['interfaces'] = interfaces
     session['metrics'] = metrics
-    parsed_metrics = ra_processing.main(RA_url, RAauth, interfaces, metrics)
+    parsed_metrics = ra_processing.main(
+        base_url=RA_url,
+        auth=RAauth,
+        interfaces=interfaces,
+        metric_labels=metrics,
+        data_start=start_date,
+        data_end=end_date
+    )
     session['vips'] = [vip.replace('/Common/', '') for vip in parsed_metrics if '/Common/' in vip]
     session['parsed_metrics'] = parsed_metrics
 
@@ -174,22 +189,31 @@ def get_pair_list() -> None:
             pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
     web.pair_list = list(pairs)
 
-#get_pair_list()
+get_pair_list()
 
 
-@web.route('/clear')
-@web.route('/clear/<new_pair>')
+@web.route('/clear', methods=['GET', 'POST'])
+@web.route('/clear/<new_pair>', methods=['GET', 'POST'])
 def clear_cache(new_pair:int=0):
     """Clear user's session cache
 
     Args:
         new_pair (int, optional): Specify node pair to load on next page. Defaults to 0.
     """
-    cookies = ['parsed_metrics', 'pair', 'interfaces', 'metrics', 'vips']
+    cookies = ['parsed_metrics', 'pair', 'interfaces', 'metrics', 'vips' ,'start_date', 'end_date']
     for cookie in cookies:
         if cookie in session:
             session.pop(cookie)
-    session['new_pair'] = int(new_pair)
+    if request.method == 'POST':
+        selection = request.form.to_dict()
+        if selection.get('pairselect'):
+            session['new_pair'] = int(selection['pairselect'])
+        if selection.get('start_date'):
+            session['start_date'] = datetime.strptime(selection['start_date'], '%Y-%m-%d')
+        if selection.get('end_date'):
+            session['end_date'] = datetime.strptime(f"{selection['end_date']} 23:59:59", '%Y-%m-%d %H:%M:%S')
+    elif request.method == 'GET':
+        session['new_pair'] = int(new_pair)
     clear_temp()
     return render_template('clear.html', title="Loading Data", message="Please wait while loading metrics")
 

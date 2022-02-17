@@ -1,11 +1,29 @@
 {% extends 'base.html' %}
 {% block content %}
 <div>
-  <h1>Home Page</h1>
+  <h1>Data Selection</h1>
 </div>
 
   <div>
-    {% include 'inc/pair_select.html' %}
+    <form action="{{url_for('clear_cache')}}" method="POST" enctype="multipart/form-data">
+      If no date range is selected, the default is the last 30 days.
+      <div class="row">
+        <div class="mb-3 col">
+          <label for="start_date" class="form-label">Start</label>
+          <input type="date" class="form-control" id="start_date" name="start_date">
+        </div>
+        <div class="mb-3 col">
+          <label for="end_date" class="form-label">End</label>
+          <input type="date" class="form-control" id="end_date" name="end_date">
+        </div>
+      </div>
+      <div class="mb-3 row">
+        {% include 'inc/pair_select.html' %}
+      </div>
+      <div class="mb-3">
+        <input type="submit" id="submit" value="Switch active pair and fetch data" />
+      </div>
+    </form>
   </div>
 
 {% endblock content %}
