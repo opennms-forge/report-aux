@@ -6,15 +6,18 @@
     <div class="navbar-collapse collapse" id="myNavbar">
         <ul class="nav navbar-nav mr-auto">
             <li class="nav-item"><a class="nav-link text-white" href="{{url_for('home_page')}}">Home</a></li>
-            <li class="nav-item dropdown">
-                <a href="#" class="nav-link dropdown-toggle text-white" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
-                <ul class="dropdown-menu vip-menu">
-                    {% for vip in session['vips'] %}
-                        <li><a class="dropdown-item {{'text-white active my-active' if vip == selected_vip}}" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a></li>
-                    {% endfor %}
-                </ul>
-                </li>
+            {% if 'parsed_metrics' in session %}
+                <li class="nav-item"><a class="nav-link text-white" href="{{url_for('pair_page')}}">Pair</a></li>
+                <li class="nav-item dropdown">
+                    <a href="#" class="nav-link dropdown-toggle text-white" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">VIP<b class="caret"></b></a>
+                    <ul class="dropdown-menu vip-menu">
+                        {% for vip in session['vips'] %}
+                            <li><a class="dropdown-item {{'text-white active my-active' if vip == selected_vip}}" href="{{url_for('vip_page', vip=vip)|safe}}">{{vip}}</a></li>
+                        {% endfor %}
+                    </ul>
+                    </li>
             <li class="nav-item"><a class="nav-link text-white" href="{{url_for('top_n_page')}}">TopN</a></li>
+            {% endif %}
             <li class="nav-item"><a class="nav-link text-white" href="{{url_for('all_report_page')}}">Saved Reports</a></li>
             <li class="nav-item"><a class="nav-link text-white" href="{{url_for('settings_page')}}">Settings</a></li>
         </ul>

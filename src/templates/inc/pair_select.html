@@ -1,0 +1,11 @@
+{% if pair_list %}
+<div class="mb-3">
+  <label for="pairselect">Set current F5 pair for reporting</label>
+  <select class="form-select" aria-label="Select F5 Pair" id="pairselect" name="pairselect">
+    <option disabled>Select F5 Pair</option>
+    {% for pair in pair_list %}
+      <option {{'selected' if loop.index0 == session['new_pair'] }} value="{{loop.index0}}">{{pair}}</option>
+    {% endfor %}
+  </select>
+</div>
+{% endif %}
