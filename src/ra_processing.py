@@ -297,6 +297,20 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     if batch_end >= data_end:
         batch_end = data_end
 
+    batches = []
+    if (data_end - data_start) > (week * 2):
+        for i in range (0,int((data_end - data_start) / (week * 2))+1):
+            if i > 0:
+                batch_start = batch_end + 1
+                batch_end = batch_start + (week * 2)
+
+                if batch_end >= data_end:
+                    batch_end = data_end
+
+            batches.append((batch_start, batch_end))
+    else:
+        batches.append((batch_start, batch_end))
+
     for interface in interfaces:
         loop_count += 1
         #if loop_count > 10:
@@ -304,19 +318,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
         parsed_metrics[interface] = {'ts':{}}
 
         metric_url = f'{base_url}measurements'
-        batches = []
-        if (data_end - data_start) > (week * 2):
-            for i in range (0,int((data_end - data_start) / (week * 2))+1):
-                if i > 0:
-                    batch_start = batch_end + 1
-                    batch_end = batch_start + (week * 2)
 
-                    if batch_end >= data_end:
-                        batch_end = data_end
-
-                batches.append((batch_start, batch_end))
-        else:
-            batches.append((batch_start, batch_end))
         for batch in batches:
             parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, batch[0], batch[1], step)
 
