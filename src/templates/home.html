@@ -6,14 +6,13 @@
 
   <div>
     <form action="{{url_for('clear_cache')}}" method="POST" enctype="multipart/form-data">
-      If no date range is selected, the default is the last 30 days.
       <div class="row">
         <div class="mb-3 col">
-          <label for="start_date" class="form-label">Start</label>
+          <label for="start_date" class="form-label">Start Date (30 days ago if omitted)</label>
           <input type="date" class="form-control" id="start_date" name="start_date">
         </div>
         <div class="mb-3 col">
-          <label for="end_date" class="form-label">End</label>
+          <label for="end_date" class="form-label">End Date (Today if omitted)</label>
           <input type="date" class="form-control" id="end_date" name="end_date">
         </div>
       </div>

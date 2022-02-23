@@ -257,7 +257,7 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
                 else:
                     parsed_metrics[label]['summary'][metric] = [parsed_metrics[interface]['ts'][ts][metric]]
 
-    parsed_metrics[label]['ts'] = dict(collections.OrderedDict(sorted(parsed_metrics[label]['ts'].items())))
+    #parsed_metrics[label]['ts'] = dict(collections.OrderedDict(sorted(parsed_metrics[label]['ts'].items())))
 
     return parsed_metrics
 
@@ -276,16 +276,40 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     month = day * 30
     step = 1
     loop_count = 0
-    if not data_start:
-        data_start = int(month) * -1
+
+    if not data_start or data_start <= 0:
+        data_start = ((int(start_time) * 1000) - month)
         parsed_metrics['node[data]']['range']['start'] = generated - timedelta(days=30)
     else:
         parsed_metrics['node[data]']['range']['start'] = datetime.fromtimestamp(data_start/1000)
-    if not data_end:
-        data_end = 0
+    if not data_end or data_end <= 0:
+        data_end = int(start_time) * 1000
         parsed_metrics['node[data]']['range']['end'] = datetime.now()
     else:
         parsed_metrics['node[data]']['range']['end'] = datetime.fromtimestamp(data_end/1000)
+
+    if data_start >= data_end:
+        data_start = month * -1
+        data_end = 0
+
+    batch_start = data_start
+    batch_end = data_start + (week * 2)
+    if batch_end >= data_end:
+        batch_end = data_end
+
+    batches = []
+    if (data_end - data_start) > (week * 2):
+        for i in range (0,int((data_end - data_start) / (week * 2))+1):
+            if i > 0:
+                batch_start = batch_end + 1
+                batch_end = batch_start + (week * 2)
+
+                if batch_end >= data_end:
+                    batch_end = data_end
+
+            batches.append((batch_start, batch_end))
+    else:
+        batches.append((batch_start, batch_end))
 
     for interface in interfaces:
         loop_count += 1
@@ -294,7 +318,9 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
         parsed_metrics[interface] = {'ts':{}}
 
         metric_url = f'{base_url}measurements'
-        parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, data_start, data_end, step)
+
+        for batch in batches:
+            parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, batch[0], batch[1], step)
 
     for interface in parsed_metrics:
         if 'node[' not in interface:
