@@ -44,6 +44,14 @@ def clear_temp(session:bool=False):
 
 clear_temp(session=False)
 
+def get_pair_list() -> None:
+    """Get names of pairs from OpenNMS instance"""
+    pairs = [list(i) for i in web.my_config['nodes']]
+    for i in range(0, len(pairs)):
+        for node in range(0, len(pairs[i])):
+            pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
+    web.pair_list = list(pairs)
+
 def update_settings(settings:dict={}):
     """Get/Write settings to disk
 
@@ -79,6 +87,7 @@ def update_settings(settings:dict={}):
         json.dump(new_settings, f)
         f.close()
         flash('Settings Updated')
+        get_pair_list()
     web.my_config = new_settings
 
 update_settings()
@@ -180,17 +189,6 @@ def get_data(redirect:redirect) -> dict:
     session['parsed_metrics'] = parsed_metrics
 
     return redirect
-
-def get_pair_list() -> None:
-    """Get names of pairs from OpenNMS instance"""
-    pairs = [list(i) for i in web.my_config['nodes']]
-    for i in range(0, len(pairs)):
-        for node in range(0, len(pairs[i])):
-            pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
-    web.pair_list = list(pairs)
-
-get_pair_list()
-
 
 @web.route('/clear', methods=['GET', 'POST'])
 @web.route('/clear/<new_pair>', methods=['GET', 'POST'])
