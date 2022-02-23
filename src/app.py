@@ -50,7 +50,6 @@ def get_pair_list() -> None:
     for i in range(0, len(pairs)):
         for node in range(0, len(pairs[i])):
             pairs[i][node] = ra_processing.get_interfaces(web.my_config['url'],HTTPBasicAuth(web.my_config['username'], web.my_config['password']),pairs[i][node])['label'].split(' ')[1][1:-1]
-    pairs = sorted(pairs)
     web.pair_list = list(pairs)
 
 def update_settings(settings:dict={}):
@@ -83,6 +82,7 @@ def update_settings(settings:dict={}):
     if new_settings.get('nodes'):
         if type(new_settings['nodes']) == str:
             new_settings['nodes'] = json.loads(new_settings['nodes'])
+            new_settings['nodes'] = sorted(new_settings['nodes'])
     if update:
         f = open('ra_config/config.json', 'w')
         json.dump(new_settings, f)
