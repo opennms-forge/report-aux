@@ -92,6 +92,7 @@ def update_settings(settings:dict={}):
     web.my_config = new_settings
 
 update_settings()
+get_pair_list()
 
 @web.errorhandler(404)
 def page_not_found(e):

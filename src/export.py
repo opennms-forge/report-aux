@@ -101,7 +101,7 @@ class PDF(FPDF, HTMLMixin):
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         table_html = """
-            <table class="table" width="75%">
+            <table class="table" width="100%">
                     <tr>
                     <th width="20%">Metric</th>
                     <th width="20%">Min</th>
@@ -132,7 +132,7 @@ class PDF(FPDF, HTMLMixin):
         for metric in top_n:
             if top_n[metric]:
                 self.template_page(pair_name, f'Top VIPs: {metric}')
-                table_html = f'<table width="75%">'
+                table_html = f'<table width="100%">'
                 table_html += f'<tr>'
                 table_html += f'<th width="50%">VIP</th>'
                 table_html += f'<th width="50%">{metric}</th>'
@@ -201,7 +201,7 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
     fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
 
     plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 60)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
     plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
     pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 150)
 

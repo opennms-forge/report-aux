@@ -46,7 +46,7 @@ def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
                             else:
                                 trend['y'].append(f'{k}:00')
                             if parsed_metrics[interface]['day_of_week'][j][k][metric] != None:
-                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] or 0 * 8)
+                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] or 0)
                             else:
                                 trend['z'].append(0)
                             trend['c'].append('Bytes Out')
@@ -58,7 +58,7 @@ def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
                             else:
                                 trend['y'].append(f'{k}:00')
                             if parsed_metrics[interface]['day_of_week'][j][k][metric] != None:
-                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] or 0 * 8)
+                                trend['z'].append(parsed_metrics[interface]['day_of_week'][j][k][metric] or 0)
                             else:
                                 trend['z'].append(0)
                             trend['c'].append('Bytes In')
@@ -66,9 +66,9 @@ def time_trend(parsed_metrics:dict, interface:str, label:list) -> dict:
         trend['hour'][k] = {'Bytes Out': [], 'Bytes In': []}
         for metric in label:
             if 'out' in metric.lower():
-                trend['hour'][k]['Bytes Out'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric) or 0 * 8)
+                trend['hour'][k]['Bytes Out'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric) or 0)
             elif 'in' in metric.lower():
-                trend['hour'][k]['Bytes In'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric) or 0 * 8)
+                trend['hour'][k]['Bytes In'].append(parsed_metrics[interface]['hour_of_day'][k].get(metric) or 0)
     for k in parsed_metrics[interface]['hour_of_day']:
         trend['hour'][k] = average_metrics(trend['hour'][k])
     for k in trend['hour']:
@@ -142,14 +142,14 @@ def time_lines(parsed_metrics:dict, interface:str, label:list) -> dict:
                 for metric in label:
                     if 'out' in metric.lower():
                         if parsed_metrics[i]['ts'][j].get(metric) not in [None, [None]]:
-                            stats_out['y'].append(parsed_metrics[i]['ts'][j].get(metric) * -8)
+                            stats_out['y'].append(parsed_metrics[i]['ts'][j].get(metric) * -1)
                         else:
                             stats_out['y'].append(0)
                         stats_out['x'].append(date)
                     elif 'in' in metric.lower():
                         stats_in['x'].append(date)
                         if parsed_metrics[i]['ts'][j].get(metric) not in [None, [None]]:
-                            stats_in['y'].append(parsed_metrics[i]['ts'][j].get(metric) * 8)
+                            stats_in['y'].append(parsed_metrics[i]['ts'][j].get(metric))
                         else:
                             stats_in['y'].append(0)
         if len(stats_out['x']) >= 100:
