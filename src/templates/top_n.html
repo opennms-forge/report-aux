@@ -15,7 +15,8 @@
     <table class="table">
       <thead>
         <th>VIP</th>
-        <th>{{metric}}</th>
+        <th>Average {{metric}}</th>
+        <th>Peak {{metric}}</th>
       </thead>
       <tbody>
         {% for site in top_n[metric] %}
@@ -25,7 +26,10 @@
             </td>
             <td style="text-align:right">
               {{top_n[metric][site]|numberFormat}}
-            </Td>
+            </td>
+            <td style="text-align:right">
+              {{session['parsed_metrics'][site]['stats'][metric]['Max']|numberFormat}}
+            </td>
           </tr>
         {% endfor %}
       </tbody>

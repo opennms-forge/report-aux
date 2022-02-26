@@ -118,7 +118,7 @@ class PDF(FPDF, HTMLMixin):
         table_html += "</table>"
         self.write_html(table_html)
 
-    def top_n_summary(self, pair_name:str, top_n:dict, x:float, y:float):
+    def top_n_summary(self, pair_name:str, parsed_metrics:dict, x:float, y:float):
         """Add page to PDF with top N summary
 
         Args:
@@ -127,6 +127,7 @@ class PDF(FPDF, HTMLMixin):
             x (int): X coordinate of table
             y (int): Y coordinate of table
         """
+        top_n = parsed_metrics['node[top_n]']
         self.set_xy(x,y)
         self.set_font("Helvetica", size=10)
         for metric in top_n:
@@ -134,8 +135,9 @@ class PDF(FPDF, HTMLMixin):
                 self.template_page(pair_name, f'Top VIPs: {metric}')
                 table_html = f'<table width="100%">'
                 table_html += f'<tr>'
-                table_html += f'<th width="50%">VIP</th>'
-                table_html += f'<th width="50%">{metric}</th>'
+                table_html += f'<th width="34%">VIP</th>'
+                table_html += f'<th width="33%">Average {metric}</th>'
+                table_html += f'<th width="33%">Peak {metric}</th>'
                 table_html += f'</tr>'
                 for site in top_n[metric]:
                     table_html += f'<tr>'
@@ -144,6 +146,7 @@ class PDF(FPDF, HTMLMixin):
                     else:
                         table_html += f'<td>{site}</td>'
                     table_html += f'<td align="right"><font face="Courier">{numberFormat(top_n[metric][site])}</font></td>'
+                    table_html += f'<td align="right"><font face="Courier">{numberFormat(parsed_metrics[site]["stats"][metric]["Max"])}</font></td>'
                     table_html += f'</tr>'
                 table_html += f'<tr><td> </td><td> </td></tr>'
                 table_html += f'</table>'
@@ -222,7 +225,7 @@ def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list)
     pdf = generate_pdf(pair_name, 'Summary', parsed_metrics['node[data]']['generated'], parsed_metrics['node[data]']['range'])
     #pdf.interface_summary(parsed_metrics['node[device]']['stats'], 10, 30)
     pdf = render_vip_pdf(pair_name, 'Summary', parsed_metrics, metrics, pdf)
-    pdf.top_n_summary(pair_name, parsed_metrics['node[top_n]'], 10, 22)
+    pdf.top_n_summary(pair_name, parsed_metrics, 10, 22)
     for vip in vips:
         interface = '/Common/' + vip
         pdf.template_page(pair_name, vip)
