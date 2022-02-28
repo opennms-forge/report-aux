@@ -204,6 +204,7 @@ def add_metrics(url:str, interface:str, parsed_metrics:dict, auth:HTTPBasicAuth,
 
     metric_data = post_data(url, auth=auth, payload=payload)
 
+    # Loop through each timestamp and metric to group data based on day/hour
     for i in range(0, len(metric_data['timestamps'])):
         ts = metric_data['timestamps'][i]
         date = datetime.fromtimestamp(ts/1000)
@@ -277,6 +278,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     step = 1
     loop_count = 0
 
+    # Generate time ranges to get data in no more than two week chunks, to ensure smaller step size
     if not data_start or data_start <= 0:
         data_start = ((int(start_time) * 1000) - month)
         parsed_metrics['node[data]']['range']['start'] = generated - timedelta(days=30)
@@ -311,6 +313,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
     else:
         batches.append((batch_start, batch_end))
 
+    # Get data for each interface
     for interface in interfaces:
         loop_count += 1
         #if loop_count > 10:
@@ -322,6 +325,7 @@ def main(base_url:str, auth:HTTPBasicAuth, interfaces:list, metric_labels:list=[
         for batch in batches:
             parsed_metrics = add_metrics(metric_url, interface, parsed_metrics, auth, metric_labels, batch[0], batch[1], step)
 
+    # Summarize collected data
     for interface in parsed_metrics:
         if 'node[' not in interface:
             parsed_metrics[interface] = average_lists(parsed_metrics[interface])
