@@ -163,6 +163,7 @@ def get_trend_graph(trend:dict, margin:int=80) -> px.scatter:
 
     Args:
         trend (dict): Graph dataset from time_trend()
+        margin (int): Margin for the graph in pixels
 
     Returns:
         px.scatter: Scatter plot of time trends
@@ -187,6 +188,7 @@ def get_trend_line(stats_out:dict, stats_in:dict, weekends:dict, margin:int=80) 
         stats_out (dict): Output data from time_lines()
         stats_in (dict): Output data from time_lines()
         weekends (dict): Output from find_weekends()
+        margin (int): Margin for the graph in pixels
 
     Returns:
         go.Figure: Line graph of traffic
