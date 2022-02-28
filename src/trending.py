@@ -158,7 +158,7 @@ def time_lines(parsed_metrics:dict, interface:str, label:list) -> dict:
 
 theme = {'out': '#204a87', 'in': '#4e9a06', 'weekend': 'rgba(126,129,157,1)', 'outfill': '#3465a4', 'infill': '#73d216'}
 
-def get_trend_graph(trend:dict) -> px.scatter:
+def get_trend_graph(trend:dict, margin:int=80) -> px.scatter:
     """Generate Plotly time trend graph
 
     Args:
@@ -174,9 +174,13 @@ def get_trend_graph(trend:dict) -> px.scatter:
     else:
         fig.add_shape(y0="18:00", y1="18:00", x0=-.5, x1=7.5, type="line", line_color="black", line_width=1)
     fig.add_vrect(x0=4.5, x1=6.5, fillcolor=theme['weekend'], opacity=0.25, layer="below", line_width=0)
+    fig.layout.margin.l = margin
+    fig.layout.margin.r = margin
+    fig.layout.margin.t = margin
+    fig.layout.margin.b = margin
     return fig
 
-def get_trend_line(stats_out:dict, stats_in:dict, weekends:dict) -> go.Figure:
+def get_trend_line(stats_out:dict, stats_in:dict, weekends:dict, margin:int=80) -> go.Figure:
     """Generate Plotly line graph of raw traffic data
 
     Args:
@@ -192,4 +196,8 @@ def get_trend_line(stats_out:dict, stats_in:dict, weekends:dict) -> go.Figure:
     fig2.add_trace(go.Scatter(x=stats_in['x'], y=stats_in['y'], mode="lines", name="BytesIn", line={'color':theme['in']}, fill='tozeroy', fillcolor=theme['infill']))
     for weekend in weekends:
         fig2.add_vrect(x0=weekend[0], x1=weekend[1], fillcolor=theme['weekend'], opacity=0.25, layer="below", line_width=0)
+    fig2.layout.margin.l = margin
+    fig2.layout.margin.r = margin
+    fig2.layout.margin.t = margin
+    fig2.layout.margin.b = margin
     return fig2

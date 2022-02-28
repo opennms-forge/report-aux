@@ -88,7 +88,7 @@ class PDF(FPDF, HTMLMixin):
             y (int): Y coordinate of image
         """
         self.set_xy(x, y)
-        self.image(image_path, link='', type='', h=100.0)
+        self.image(image_path, link='', type='', w=self.w-(x*2))
 
     def interface_summary(self, summary:dict, x:float, y:float):
         """Add interface summary to page
@@ -200,14 +200,13 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
     trend_time = trending.time_trend(parsed_metrics, interface, metrics)
     trend_line = trending.time_lines(parsed_metrics, interface, metrics)
 
-    fig1 = trending.get_trend_graph(trend_time)
-    fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends)
+    fig1 = trending.get_trend_graph(trend_time, margin=10)
+    fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends, margin=10)
 
-    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=500)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 70)
-    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=500)
-    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 150)
-
+    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=400)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 75)
+    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=400)
+    pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
     return pdf
 
 def render_node_pdf(pair_name:str, vips:list, parsed_metrics:dict, metrics:list) -> PDF:
