@@ -360,12 +360,7 @@ def settings_page():
         logocustomer= base64.b64encode(f.read()).decode('utf-8')
     config = dict(web.my_config)
     config['nodes'] = json.dumps(config['nodes'])
-    if not hasattr(web, 'pair_list'):
-        get_pair_list()
-    pair_list = []
-    for pair in web.pair_list:
-        pair_list.append(":".join(pair))
-    return render_template('settings.html', config=config, logoimage=logoimage, logocustomer=logocustomer, pair_list=pair_list)
+    return render_template('settings.html', config=config, logoimage=logoimage, logocustomer=logocustomer)
 
 @web.route('/all_nodes')
 def all_report_page():
