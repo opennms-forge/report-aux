@@ -205,9 +205,9 @@ def render_vip_pdf(pair_name:str, vip:str, parsed_metrics:dict, metrics:list, pd
     fig1 = trending.get_trend_graph(trend_time, margin=10)
     fig2 = trending.get_trend_line(trend_line[0], trend_line[1], weekends, margin=10)
 
-    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=900, height=400)
+    plotly.io.write_image(fig1, file=f"temp/fig-{vip.replace('/','-')}-1.png", format='png', width=1350, height=600)
     pdf.add_image(f"temp/fig-{vip.replace('/','-')}-1.png", 10, 75)
-    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=900, height=400)
+    plotly.io.write_image(fig2, file=f"temp/fig-{vip.replace('/','-')}-2.png", format='png', width=1350, height=600)
     pdf.add_image(f"temp/fig-{vip.replace('/','-')}-2.png", 10, 170)
     return pdf
 
