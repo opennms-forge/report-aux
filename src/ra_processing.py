@@ -12,7 +12,7 @@ import json
 
 
 def get_data(url: str, auth: HTTPBasicAuth) -> dict:
-    """Retreive data from OpenNMS API
+    """Retrieve data from OpenNMS API
 
     Args:
         url (str): URL to OpenNMS API
@@ -199,7 +199,7 @@ def add_metrics(  # noqa C901
         metrics (list): List of metrics to request
         start (int): Timestamp for start of data to request
         end (int): Timestamp for end of data to request
-        step (int, optional): Step between timestamps to reqest. Defaults to 1.
+        step (int, optional): Step between timestamps to request. Defaults to 1.
 
     Returns:
         dict: Previously collected metrics with new metrics added

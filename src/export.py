@@ -243,7 +243,7 @@ def render_vip_pdf(
 def render_node_pdf(
     pair_name: str, vips: list, parsed_metrics: dict, metrics: list
 ) -> PDF:
-    """Geneate PDF for all VIPs on a node pair
+    """Generate PDF for all VIPs on a node pair
 
     Args:
         pair_name (str): Node pair name

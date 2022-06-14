@@ -119,23 +119,23 @@ update_settings()
 get_pair_list()
 
 
-@web.errorhandler(404)  # noqa: W0404
-def page_not_found(e):
+@web.errorhandler(404)
+def page_not_found(e):  # noqa: W0404
     return render_template("error.html", error=e), 403
 
 
-@web.errorhandler(404)  # noqa: W0404
-def page_not_found(e):
+@web.errorhandler(404)
+def page_not_found(e):  # noqa: W0404
     return render_template("error.html", error=e), 404
 
 
-@web.errorhandler(410)  # noqa: W0404
-def page_not_found(e):
+@web.errorhandler(410)
+def page_not_found(e):  # noqa: W0404
     return render_template("error.html", error=e), 410
 
 
-@web.errorhandler(500)  # noqa: W0404
-def page_not_found(e):
+@web.errorhandler(500)
+def page_not_found(e):  # noqa: W0404
     return render_template("error.html", error=e), 500
 
 
@@ -167,7 +167,7 @@ def get_data(redirect: redirect) -> dict:
     """Get data from remote OpenNMS instance
 
     Args:
-        redirect (redirect): URL to redirect user after retreiving data.
+        redirect (redirect): URL to redirect user after retrieving data.
 
     Returns:
         dict: Data from remote OpenNMS instance
@@ -258,8 +258,8 @@ def clear_cache(new_pair: int = 0):
             session.pop(cookie)
     if request.method == "POST":
         selection = request.form.to_dict()
-        if selection.get("pairselect"):
-            session["new_pair"] = int(selection["pairselect"])
+        if selection.get("pair_select"):
+            session["new_pair"] = int(selection["pair_select"])
         if selection.get("start_date"):
             session["start_date"] = datetime.strptime(
                 selection["start_date"], "%Y-%m-%d"
@@ -449,13 +449,13 @@ def settings_page():
     if request.method == "POST":
         update_settings(request.form.to_dict())
     with open("ra_config/logo.png", "rb") as f:
-        logoimage = base64.b64encode(f.read()).decode("utf-8")
+        logo_image = base64.b64encode(f.read()).decode("utf-8")
     with open("ra_config/logo_customer.png", "rb") as f:
-        logocustomer = base64.b64encode(f.read()).decode("utf-8")
+        logo_customer = base64.b64encode(f.read()).decode("utf-8")
     config = dict(web.my_config)
     config["nodes"] = json.dumps(config["nodes"])
     return render_template(
-        "settings.html", config=config, logoimage=logoimage, logocustomer=logocustomer
+        "settings.html", config=config, logo_image=logo_image, logo_customer=logo_customer
     )
 
 
