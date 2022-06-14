@@ -24,6 +24,12 @@ def get_data(url: str, auth: HTTPBasicAuth) -> dict:
     headers = {"Accept": "application/json"}
     print("Getting data from: " + url)
     data = requests.get(url, auth=auth, headers=headers)
+    if data.status_code in [404]:
+        return {"id": f'node[{url.split("fornode/")[1]}]',
+                'label': f'0.0.0.0 ({url.split("fornode/")[1]}-NotFound)',
+                'name': f'0.0.0.0 ({url.split("fornode/")[1]}-NotFound)',
+                "children": {'resource': [{"stringPropertyAttributes": {}}]}
+                }
     return data.json()
 
 
