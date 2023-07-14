@@ -461,6 +461,12 @@ def settings_page():
     )
 
 
+@web.route("/settings/reload")
+def reload_settings():
+    delattr(web, "pair_list")
+    return redirect(url_for("home_page"))
+
+
 @web.route("/all_nodes")
 def all_report_page():
     """List all cached PDF files from report generation"""
