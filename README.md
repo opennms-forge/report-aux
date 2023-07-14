@@ -38,7 +38,7 @@ These are placed in the `src/ra_config` folder inside the installation directory
 
 The `report-aux` service can be started/stopped/enabled via `systemctl`.
 
-Once running, the service is available at `http://hostname:5000`.
+Once running, the service is available at `http://hostname:8080`.
 A reverse proxy can be setup to redirect traffic if HTTPS is desired.
 
 ### Optional export scheduling

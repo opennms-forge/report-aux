@@ -1,6 +1,6 @@
-bind = '0.0.0.0:5000'
-workers = 5
-threads = 3
+bind = "0.0.0.0:8080"
+workers = 3
+threads = 2
 timeout = 120
 max_requests = 5000
 max_requests_jitter = 500

@@ -2,13 +2,14 @@
 
 # Collect data from OpenNMS instance
 
-from collections import Counter
-from requests.auth import HTTPBasicAuth
-from datetime import datetime, timedelta
-import requests
-import numpy as np
-import time
 import json
+import time
+from collections import Counter
+from datetime import datetime, timedelta
+
+import numpy as np
+import requests
+from requests.auth import HTTPBasicAuth
 
 
 def get_data(url: str, auth: HTTPBasicAuth) -> dict:

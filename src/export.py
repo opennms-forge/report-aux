@@ -2,16 +2,18 @@
 
 # PDF generation
 
-from requests.auth import HTTPBasicAuth
-from fpdf import FPDF, HTMLMixin
-from datetime import datetime
-import trending
-import plotly
 import json
-import ra_processing
-import time
-import shutil
 import os
+import shutil
+import time
+from datetime import datetime
+
+import plotly
+from fpdf import FPDF, HTMLMixin
+from requests.auth import HTTPBasicAuth
+
+import ra_processing
+import trending
 
 
 def numberFormat(value: float, round: int = 2) -> str:
