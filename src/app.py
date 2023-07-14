@@ -2,31 +2,30 @@
 
 # Flask web front end
 
+import base64
+import json
+import os
+import time
 from datetime import datetime
+from os.path import exists
+
+import plotly
 from flask import (
     Flask,
+    flash,
+    make_response,
+    redirect,
     render_template,
     request,
     session,
-    redirect,
     url_for,
-    make_response,
-    flash,
 )
-from flask_session import Session
 from requests.auth import HTTPBasicAuth
-from os.path import exists
 
-import json
-import plotly
-import base64
-import os
-import time
-
+import export
 import ra_processing
 import trending
-import export
-
+from flask_session import Session
 
 web = Flask(__name__)
 SESSION_TYPE = "filesystem"
@@ -455,7 +454,10 @@ def settings_page():
     config = dict(web.my_config)
     config["nodes"] = json.dumps(config["nodes"])
     return render_template(
-        "settings.html", config=config, logo_image=logo_image, logo_customer=logo_customer
+        "settings.html",
+        config=config,
+        logo_image=logo_image,
+        logo_customer=logo_customer,
     )
 
 
